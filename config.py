@@ -11,10 +11,11 @@ trial_app_secret = 'gxIGpzhNY7XGYfpQRPv8uOQSdOWXjZxdzbSt4_d31SY'
 real_host_url = 'https://api.kiwoom.com'
 trial_host_url = 'https://mockapi.kiwoom.com'
 
-real_socket_url = 'wss://api.kiwoom.com:10000/api/dostk/websocket'
-trial_socket_url = 'wss://mockapi.kiwoom.com:10000/api/dostk/websocket'
+#real_socket_url = 'wss://api.kiwoom.com:10000/api/dostk/websocket'
+#trial_socket_url = 'wss://mockapi.kiwoom.com:10000/api/dostk/websocket'
 
-
+real_socket_url = 'wss://api.kiwoom.com:10000'
+trial_socket_url = 'wss://mockapi.kiwoom.com:10000'
 
 #########
 app_key = trial_app_key if is_trial_trading else real_app_key
