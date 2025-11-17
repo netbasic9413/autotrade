@@ -31,9 +31,9 @@ def fn_ka10001(stk_cd, cont_yn='N', next_key='', token=None):
 	response = requests.post(url, headers=headers, json=params)
 
 	# 4. 응답 상태 코드와 데이터 출력
-	logger.info('Code:', response.status_code)
-	logger.info('Header:', json.dumps({key: response.headers.get(key) for key in ['next-key', 'cont-yn', 'api-id']}, indent=4, ensure_ascii=False))
-	logger.info('Body:', json.dumps(response.json(), indent=4, ensure_ascii=False))  # JSON 응답을 파싱하여 출력
+	logger.info('Code: %d', response.status_code)
+	logger.info('Header: %s', json.dumps({key: response.headers.get(key) for key in ['next-key', 'cont-yn', 'api-id']}, indent=4, ensure_ascii=False))
+	logger.info('Body: %s', json.dumps(response.json(), indent=4, ensure_ascii=False))  # JSON 응답을 파싱하여 출력
 
 	return response.json()['stk_nm']
 
