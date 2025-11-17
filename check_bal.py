@@ -2,6 +2,11 @@ import requests
 import json
 from config import host_url
 from login import fn_au10001 as get_token
+import logfile
+
+
+logger = logfile.setup_log()
+
 
 # 예수금상세현황요청
 def fn_kt00001(cont_yn='N', next_key='', token=None):
@@ -30,11 +35,11 @@ def fn_kt00001(cont_yn='N', next_key='', token=None):
 	response = requests.post(url, headers=headers, json=params)
 
 	# 4. 응답 상태 코드와 데이터 출력
-	print('Code:', response.status_code)
-	print('Body:', json.dumps(response.json(), indent=4, ensure_ascii=False))  # JSON 응답을 파싱하여 출력
+	logger.info('Code:', response.status_code)
+	logger.info('Body:', json.dumps(response.json(), indent=4, ensure_ascii=False))  # JSON 응답을 파싱하여 출력
 
 	entry = response.json()['entr']
-	print('예수금: ', entry)
+	logger.info('예수금: ', entry)
 	return entry
 
 # 실행 구간

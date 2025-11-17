@@ -1,6 +1,10 @@
 import os
 import time
 import json
+import logfile
+
+
+logger = logfile.setup_log()
 
 def get_setting(key, default=''):
 	try:
@@ -11,7 +15,7 @@ def get_setting(key, default=''):
 			settings = json.load(f)
 		return settings.get(key, '')
 	except Exception as e:
-		print(f"오류 발생(get_setting): {e}")
+		logger.info(f"오류 발생(get_setting): {e}")
 		return default
 
 def cached_setting(key, default=''):

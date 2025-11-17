@@ -3,6 +3,8 @@ import websockets
 import json
 from config import socket_url
 from login import fn_au10001 as get_token
+import logfile
+
 
 SOCKET_URL = socket_url + '/api/dostk/websocket'
 
@@ -13,13 +15,14 @@ class WebSocketClient:
 		self.connected = False
 		self.keep_running = True
 		self.received_data = None
+		self.logger = logfile.setup_log()
 
 	# WebSocket 서버에 연결합니다.
 	async def connect(self, token):
 		try:
 			self.websocket = await websockets.connect(self.uri)
 			self.connected = True
-			print("서버와 연결을 시도 중입니다.")
+			self.logger.info("서버와 연결을 시도 중입니다.")
 
 			# 로그인 패킷
 			param = {
@@ -27,12 +30,12 @@ class WebSocketClient:
 				'token': token
 			}
 
-			print('실시간 시세 서버로 로그인 패킷을 전송합니다.')
+			self.logger.info('실시간 시세 서버로 로그인 패킷을 전송합니다.')
 			# 웹소켓 연결 시 로그인 정보 전달
 			await self.send_message(message=param)
 
 		except Exception as e:
-			print(f'Connection error: {e}')
+			self.logger.info(f'Connection error: {e}')
 			self.connected = False
 
 	# 서버에 메시지를 보냅니다. 연결이 없다면 자동으로 연결합니다.
@@ -46,7 +49,7 @@ class WebSocketClient:
 				message = json.dumps(message)
 
 		await self.websocket.send(message)
-		print(f'Message sent: {message}')
+		self.logger.info(f'Message sent: {message}')
 
 	# 서버에서 오는 메시지를 수신하여 출력합니다.
 	async def receive_messages(self):
@@ -58,10 +61,10 @@ class WebSocketClient:
 				# 메시지 유형이 LOGIN일 경우 로그인 시도 결과 체크
 				if response.get('trnm') == 'LOGIN':
 					if response.get('return_code') != 0:
-						print('로그인 실패하였습니다. : ', response.get('return_msg'))
+						self.logger.info('로그인 실패하였습니다. : ', response.get('return_msg'))
 						await self.disconnect()
 					else:
-						print('로그인 성공하였습니다.')
+						self.logger.info('로그인 성공하였습니다.')
 
 				# 메시지 유형이 PING일 경우 수신값 그대로 송신
 				elif response.get('trnm') == 'PING':
@@ -70,14 +73,14 @@ class WebSocketClient:
 				if response.get('trnm') != 'PING':
 					data = response.get('data')
 					if data:
-						print(f'실시간 시세 서버 응답 수신(data): {data}')
+						self.logger.info(f'실시간 시세 서버 응답 수신(data): {data}')
 						self.received_data = data  # 받은 데이터 저장
 						self.keep_running = False  # 소켓 중단 플래그 설정
 						await self.disconnect()     # 소켓 연결 종료
 						return data                 # data를 반환
 
 			except websockets.ConnectionClosed:
-				print('Connection closed by the server')
+				self.logger.info('Connection closed by the server')
 				self.connected = False
 				await self.websocket.close()
 
@@ -92,7 +95,7 @@ class WebSocketClient:
 		if self.connected and self.websocket:
 			await self.websocket.close()
 			self.connected = False
-			print('Disconnected from WebSocket server')
+			self.logger.info('Disconnected from WebSocket server')
 
 async def get_condition_list(token):
 	"""조건식 목록을 가져오는 함수"""
@@ -116,7 +119,7 @@ async def get_condition_list(token):
 		return websocket_client.received_data if hasattr(websocket_client, 'received_data') else None
 		
 	except Exception as e:
-		print(f"조건식 목록 가져오기 실패: {e}")
+		self.logger.info(f"조건식 목록 가져오기 실패: {e}")
 		return None
 
 async def main():

@@ -1,6 +1,11 @@
 import requests
 import json
 from config import app_key, app_secret, host_url
+import logfile
+
+
+
+logger = logfile.setup_log()
 
 # 접근토큰 발급
 def fn_au10001():
@@ -24,8 +29,8 @@ def fn_au10001():
 	response = requests.post(url, headers=headers, json=data)
 
 	# 4. 응답 상태 코드와 데이터 출력
-	print('Code:', response.status_code)
-	print('Body:', json.dumps(response.json(), indent=4, ensure_ascii=False))  # JSON 응답을 파싱하여 출력
+	logger.info('Code:', response.status_code)
+	logger.info('Body:', json.dumps(response.json(), indent=4, ensure_ascii=False))  # JSON 응답을 파싱하여 출력
 
 	token = response.json().get('token')
 	return token
@@ -34,4 +39,4 @@ def fn_au10001():
 # 실행 구간
 if __name__ == '__main__':
 	token = fn_au10001()
-	print("토큰: ",token)
+	logger.info("토큰: ",token)

@@ -2,6 +2,11 @@ import requests
 import json
 from config import host_url
 from login import fn_au10001 as get_token
+import logfile
+
+
+
+logger = logfile.setup_log()
 
 # 주식 매도주문
 def fn_kt10001(stk_cd, ord_qty, cont_yn='N', next_key='', token=None):
@@ -32,9 +37,9 @@ def fn_kt10001(stk_cd, ord_qty, cont_yn='N', next_key='', token=None):
 	response = requests.post(url, headers=headers, json=params)
 
 	# 5. 응답 상태 코드와 데이터 출력
-	print('Code:', response.status_code)
-	print('Header:', json.dumps({key: response.headers.get(key) for key in ['next-key', 'cont-yn', 'api-id']}, indent=4, ensure_ascii=False))
-	print('Body:', json.dumps(response.json(), indent=4, ensure_ascii=False))  # JSON 응답을 파싱하여 출력
+	logger.info('Code:', response.status_code)
+	logger.info('Header:', json.dumps({key: response.headers.get(key) for key in ['next-key', 'cont-yn', 'api-id']}, indent=4, ensure_ascii=False))
+	logger.info('Body:', json.dumps(response.json(), indent=4, ensure_ascii=False))  # JSON 응답을 파싱하여 출력
 
 	return response.json().get('return_code')
 

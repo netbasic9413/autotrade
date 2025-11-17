@@ -2,6 +2,10 @@ import requests
 import pandas as pd
 from config import host_url
 from login import fn_au10001 as get_token
+import logfile
+
+
+logger = logfile.setup_log()
 
 # 계좌평가현황요청
 def fn_kt00004(print_df=False, cont_yn='N', next_key='', token=None):
@@ -33,7 +37,7 @@ def fn_kt00004(print_df=False, cont_yn='N', next_key='', token=None):
 	if print_df:
 		df = pd.DataFrame(stk_acnt_evlt_prst)[['stk_cd', 'stk_nm', 'pl_rt', 'rmnd_qty']]
 		pd.set_option('display.unicode.east_asian_width', True)
-		print(df.to_string(index=False))
+		logger.info(df.to_string(index=False))
 
 	return stk_acnt_evlt_prst
 

@@ -6,6 +6,8 @@ from config import socket_url
 from check_n_buy import chk_n_buy
 from get_setting import get_setting
 from login import fn_au10001 as get_token
+import logfile
+
 
 class RealTimeSearch:
 	def __init__(self, on_connection_closed=None):
@@ -16,6 +18,7 @@ class RealTimeSearch:
 		self.receive_task = None
 		self.on_connection_closed = on_connection_closed  # 연결 종료 시 호출될 콜백 함수
 		self.token = None  # 토큰 저장
+		self.logger = logfile.setup_log()
 
 	async def connect(self, token):
 		"""WebSocket 서버에 연결합니다."""
@@ -23,7 +26,7 @@ class RealTimeSearch:
 			self.token = token  # 토큰 저장
 			self.websocket = await websockets.connect(self.socket_url)
 			self.connected = True
-			print("서버와 연결을 시도 중입니다.")
+			self.logger.info("서버와 연결을 시도 중입니다.")
 
 			# 로그인 패킷
 			param = {
@@ -31,12 +34,12 @@ class RealTimeSearch:
 				'token': token
 			}
 
-			print('실시간 시세 서버로 로그인 패킷을 전송합니다.')
+			self.logger.info('실시간 시세 서버로 로그인 패킷을 전송합니다.')
 			# 웹소켓 연결 시 로그인 정보 전달
 			await self.send_message(message=param)
 
 		except Exception as e:
-			print(f'Connection error: {e}')
+			self.logger.info(f'Connection error: {e}')
 			self.connected = False
 			self.websocket = None
 
@@ -51,7 +54,7 @@ class RealTimeSearch:
 				message = json.dumps(message)
 
 			await self.websocket.send(message)
-			print(f'Message sent: {message}')
+			self.logger.info(f'Message sent: {message}')
 
 	async def receive_messages(self):
 		"""서버에서 오는 메시지를 수신하여 출력합니다."""
@@ -66,11 +69,11 @@ class RealTimeSearch:
 				# 메시지 유형이 LOGIN일 경우 로그인 시도 결과 체크
 				if response.get('trnm') == 'LOGIN':
 					if response.get('return_code') != 0:
-						print('로그인 실패하였습니다. : ', response.get('return_msg'))
+						self.logger.info('로그인 실패하였습니다. : ', response.get('return_msg'))
 						await self.disconnect()
 					else:
-						print('로그인 성공하였습니다.')
-						print('조건검색 목록조회 패킷을 전송합니다.')
+						self.logger.info('로그인 성공하였습니다.')
+						self.logger.info('조건검색 목록조회 패킷을 전송합니다.')
 						# 로그인 패킷
 						param = {
 							'trnm': 'CNSRLST'
@@ -79,11 +82,11 @@ class RealTimeSearch:
 
 				# 메시지 유형이 PING일 경우 수신값 그대로 송신
 				elif response.get('trnm') == 'PING':
-					print(f'PING 메시지 수신: {response}')
+					self.logger.info(f'PING 메시지 수신: {response}')
 					await self.send_message(response)
 
 				if response.get('trnm') != 'PING':
-					print(f'실시간 시세 서버 응답 수신: {response}')
+					self.logger.info(f'실시간 시세 서버 응답 수신: {response}')
 
 					if response.get('trnm') == 'REAL' and response.get('data'):
 						items = response['data']
@@ -102,7 +105,7 @@ class RealTimeSearch:
 							await asyncio.sleep(1)
 
 			except websockets.ConnectionClosed:
-				print('Connection closed by the server')
+				self.logger.info('Connection closed by the server')
 				self.connected = False
 				if self.websocket:
 					try:
@@ -115,36 +118,36 @@ class RealTimeSearch:
 					try:
 						await self.on_connection_closed()
 					except Exception as e:
-						print(f'콜백 실행 중 오류: {e}')
+						self.logger.info(f'콜백 실행 중 오류: {e}')
 				break  # 루프 종료
 			
 			except json.JSONDecodeError as e:
-				print(f'JSON 파싱 오류: {e}')
-				print(f'수신한 원본 메시지: {raw_message if raw_message else "수신 실패"}')
+				self.logger.info(f'JSON 파싱 오류: {e}')
+				self.logger.info(f'수신한 원본 메시지: {raw_message if raw_message else "수신 실패"}')
 				continue  # 다음 메시지 수신 계속
 			
 			except Exception as e:
-				print(f'receive_messages에서 예외 발생: {type(e).__name__}: {e}')
-				print(f'연결 상태: connected={self.connected}, websocket={self.websocket is not None}')
+				self.logger.info(f'receive_messages에서 예외 발생: {type(e).__name__}: {e}')
+				self.logger.info(f'연결 상태: connected={self.connected}, websocket={self.websocket is not None}')
 				
 				# 연결이 끊어진 것으로 보이면 연결 상태 확인
 				if self.websocket:
 					try:
 						# 연결이 살아있는지 확인
 						await asyncio.wait_for(self.websocket.ping(), timeout=2)
-						print('연결은 유지되고 있습니다. 메시지 수신 계속...')
+						self.logger.info('연결은 유지되고 있습니다. 메시지 수신 계속...')
 						continue
 					except Exception as ping_e:
-						print(f'연결 확인 실패: {ping_e}')
+						self.logger.info(f'연결 확인 실패: {ping_e}')
 						self.connected = False
 						if self.on_connection_closed:
 							try:
 								await self.on_connection_closed()
 							except Exception as callback_e:
-								print(f'콜백 실행 중 오류: {callback_e}')
+								self.logger.info(f'콜백 실행 중 오류: {callback_e}')
 						break  # 루프 종료
 				else:
-					print('websocket이 None입니다. 루프 종료')
+					self.logger.info('websocket이 None입니다. 루프 종료')
 					break  # 루프 종료
 
 
@@ -155,11 +158,11 @@ class RealTimeSearch:
 			try:
 				await self.websocket.close()
 			except Exception as e:
-				print(f'WebSocket close error: {e}')
+				self.logger.info(f'WebSocket close error: {e}')
 			finally:
 				self.connected = False
 				self.websocket = None
-				print('Disconnected from WebSocket server')
+				self.logger.info('Disconnected from WebSocket server')
 
 	async def start(self, token):
 		"""
@@ -186,7 +189,7 @@ class RealTimeSearch:
 			
 			# 연결이 성공했는지 확인
 			if not self.connected:
-				print('WebSocket 연결에 실패했습니다.')
+				self.logger.info('WebSocket 연결에 실패했습니다.')
 				return False
 
 			# WebSocket 메시지 수신을 백그라운드에서 실행합니다.
@@ -203,11 +206,11 @@ class RealTimeSearch:
 				'stex_tp': 'K', # 거래소구분
 			}, token)
 			
-			print(f'실시간 검색이 시작되었습니다. seq: {seq}')
+			self.logger.info(f'실시간 검색이 시작되었습니다. seq: {seq}')
 			return True
 			
 		except Exception as e:
-			print(f'실시간 검색 시작 실패: {e}')
+			self.logger.info(f'실시간 검색 시작 실패: {e}')
 			return False
 
 	async def stop(self):
@@ -228,11 +231,11 @@ class RealTimeSearch:
 				self.receive_task = None
 				await self.disconnect()
 			
-			print('실시간 검색이 중지되었습니다.')
+			self.logger.info('실시간 검색이 중지되었습니다.')
 			return True
 			
 		except Exception as e:
-			print(f'실시간 검색 중지 실패: {e}')
+			self.logger.info(f'실시간 검색 중지 실패: {e}')
 			return False
 
 # 사용 예시
@@ -242,7 +245,7 @@ async def main():
 	# 실시간 검색 시작
 	success = await rt_search.start(get_token())
 	if success:
-		print("실시간 검색이 성공적으로 시작되었습니다.")
+		self.logger.info("실시간 검색이 성공적으로 시작되었습니다.")
 		
 		# 10초 후 중지
 		await asyncio.sleep(10)

@@ -8,6 +8,7 @@ from acc_val import fn_kt00004
 from market_hour import MarketHour
 from get_seq import get_condition_list
 from login import fn_au10001
+import logfile
 
 class ChatCommand:
 	def __init__(self):
@@ -16,6 +17,7 @@ class ChatCommand:
 		self.settings_path = os.path.join(self.script_dir, 'settings.json')
 		self.check_n_sell_task = None  # check_n_sell 백그라운드 태스크
 		self.token = None  # 현재 사용 중인 토큰
+		self.logger = logfile.setup_log()
 	
 	def get_token(self):
 		"""새로운 토큰을 발급받습니다."""
@@ -23,27 +25,27 @@ class ChatCommand:
 			token = fn_au10001()
 			if token:
 				self.token = token
-				print(f"새로운 토큰 발급 완료: {token[:10]}...")
+				self.logger.info(f"새로운 토큰 발급 완료: {token[:10]}...")
 				return token
 			else:
-				print("토큰 발급 실패")
+				self.logger.info("토큰 발급 실패")
 				return None
 		except Exception as e:
-			print(f"토큰 발급 중 오류: {e}")
+			self.logger.info(f"토큰 발급 중 오류: {e}")
 			return None
 	
 	async def _on_connection_closed(self):
 		"""WebSocket 연결이 종료되었을 때 호출되는 콜백 함수"""
 		try:
-			print("WebSocket 연결이 종료되어 자동으로 stop을 실행합니다.")
+			self.logger.info("WebSocket 연결이 종료되어 자동으로 stop을 실행합니다.")
 			tel_send("⚠️ 서버 연결이 끊어져 자동으로 서비스를 재시작합니다.")
 			await self.stop(set_auto_start_false=False)  # auto_start는 그대로 유지
 
-			print("1초 후 서비스를 재시작합니다.")
+			self.logger.info("1초 후 서비스를 재시작합니다.")
 			await asyncio.sleep(1)
 			await self.start()
 		except Exception as e:
-			print(f"연결 종료 콜백 실행 중 오류: {e}")
+			self.logger.info(f"연결 종료 콜백 실행 중 오류: {e}")
 			tel_send(f"❌ 연결 종료 처리 중 오류가 발생했습니다: {e}")
 	
 	def update_setting(self, key, value):
@@ -59,7 +61,7 @@ class ChatCommand:
 			
 			return True
 		except Exception as e:
-			print(f"설정 업데이트 실패: {e}")
+			self.logger.info(f"설정 업데이트 실패: {e}")
 			return False
 	
 	async def _check_n_sell_loop(self):
@@ -79,11 +81,11 @@ class ChatCommand:
 						failure_count = 0  # 성공 시 실패 카운터 리셋
 					else:
 						failure_count += 1
-						print(f"chk_n_sell 실행 실패 ({failure_count}/{max_failures})")
+						self.logger.info(f"chk_n_sell 실행 실패 ({failure_count}/{max_failures})")
 						
 						# 10번 연속 실패 시 자동 재시작
 						if failure_count >= max_failures:
-							print(f"chk_n_sell이 {max_failures}번 연속 실패하여 자동 재시작을 실행합니다.")
+							self.logger.info(f"chk_n_sell이 {max_failures}번 연속 실패하여 자동 재시작을 실행합니다.")
 							tel_send(f"⚠️ chk_n_sell이 {max_failures}번 연속 실패하여 자동 재시작합니다.")
 							
 							# 현재 루프 중단
@@ -91,11 +93,11 @@ class ChatCommand:
 							
 				except Exception as e:
 					failure_count += 1
-					print(f"chk_n_sell 실행 중 예외 발생 ({failure_count}/{max_failures}): {e}")
+					self.logger.info(f"chk_n_sell 실행 중 예외 발생 ({failure_count}/{max_failures}): {e}")
 					
 					# 10번 연속 실패 시 자동 재시작
 					if failure_count >= max_failures:
-						print(f"chk_n_sell이 {max_failures}번 연속 실패하여 자동 재시작을 실행합니다.")
+						self.logger.info(f"chk_n_sell이 {max_failures}번 연속 실패하여 자동 재시작을 실행합니다.")
 						tel_send(f"⚠️ 서버의 계좌 확인 기능 문제로 자동으로 서비스를 재시작합니다.")
 						
 						# 현재 루프 중단
@@ -104,9 +106,9 @@ class ChatCommand:
 				await asyncio.sleep(1)
 				
 		except asyncio.CancelledError:
-			print("check_n_sell 백그라운드 태스크가 중지되었습니다")
+			self.logger.info("check_n_sell 백그라운드 태스크가 중지되었습니다")
 		except Exception as e:
-			print(f"check_n_sell 백그라운드 태스크 오류: {e}")
+			self.logger.info(f"check_n_sell 백그라운드 태스크 오류: {e}")
 		
 		# 10번 연속 실패로 루프가 종료된 경우 자동 재시작
 		if failure_count >= max_failures:
@@ -114,7 +116,7 @@ class ChatCommand:
 				self.process_command('stop')
 				self.process_command('start')
 			except Exception as e:
-				print(f"자동 재시작 중 오류: {e}")
+				self.logger.info(f"자동 재시작 중 오류: {e}")
 				tel_send(f"❌ 자동 재시작 중 오류가 발생했습니다: {e}")
 	
 	async def start(self):
@@ -122,7 +124,7 @@ class ChatCommand:
 		try:
 			# 기존 check_n_sell 태스크가 실행 중이면 정지
 			if self.check_n_sell_task and not self.check_n_sell_task.done():
-				print("기존 check_n_sell 태스크를 정지합니다")
+				self.logger.info("기존 check_n_sell 태스크를 정지합니다")
 				self.check_n_sell_task.cancel()
 				try:
 					await self.check_n_sell_task
@@ -162,7 +164,7 @@ class ChatCommand:
 					else:
 						# 연결 실패 시 재시도
 						if attempt < max_retries - 1:  # 마지막 시도가 아닌 경우
-							print(f"WebSocket 연결 실패, {retry_delay}초 후 재시도합니다... ({attempt + 1}/{max_retries})")
+							self.logger.info(f"WebSocket 연결 실패, {retry_delay}초 후 재시도합니다... ({attempt + 1}/{max_retries})")
 							tel_send(f"⚠️ WebSocket 연결 실패, {retry_delay}초 후 재시도합니다... ({attempt + 1}/{max_retries})")
 							
 							# 지수 백오프: 재시도 간격을 점진적으로 증가
@@ -175,13 +177,13 @@ class ChatCommand:
 								token = new_token
 						else:
 							# 마지막 시도도 실패한 경우
-							print(f"WebSocket 연결이 {max_retries}번 연속 실패했습니다.")
+							self.logger.info(f"WebSocket 연결이 {max_retries}번 연속 실패했습니다.")
 							tel_send(f"❌ WebSocket 연결이 {max_retries}번 연속 실패했습니다. 나중에 다시 'start' 명령어를 입력해주세요.")
 							return False
 							
 				except Exception as e:
 					if attempt < max_retries - 1:  # 마지막 시도가 아닌 경우
-						print(f"WebSocket 연결 중 오류 발생, {retry_delay}초 후 재시도합니다... ({attempt + 1}/{max_retries}): {e}")
+						self.logger.info(f"WebSocket 연결 중 오류 발생, {retry_delay}초 후 재시도합니다... ({attempt + 1}/{max_retries}): {e}")
 						tel_send(f"⚠️ WebSocket 연결 중 오류 발생, {retry_delay}초 후 재시도합니다... ({attempt + 1}/{max_retries})")
 						
 						await asyncio.sleep(retry_delay)
@@ -193,7 +195,7 @@ class ChatCommand:
 							token = new_token
 					else:
 						# 마지막 시도도 실패한 경우
-						print(f"WebSocket 연결이 {max_retries}번 연속 실패했습니다: {e}")
+						self.logger.info(f"WebSocket 연결이 {max_retries}번 연속 실패했습니다: {e}")
 						tel_send(f"❌ WebSocket 연결이 {max_retries}번 연속 실패했습니다: {e}")
 						return False
 			
@@ -214,7 +216,7 @@ class ChatCommand:
 			
 			# check_n_sell 백그라운드 태스크 정지
 			if self.check_n_sell_task and not self.check_n_sell_task.done():
-				print("check_n_sell 백그라운드 태스크를 정지합니다")
+				self.logger.info("check_n_sell 백그라운드 태스크를 정지합니다")
 				self.check_n_sell_task.cancel()
 				try:
 					await self.check_n_sell_task

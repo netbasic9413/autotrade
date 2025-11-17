@@ -4,6 +4,10 @@ from sell_stock import fn_kt10001 as sell_stock
 from tel_send import tel_send
 from get_setting import cached_setting
 from login import fn_au10001 as get_token
+import logfile
+
+
+logger = logfile.setup_log()
 
 def chk_n_sell(token=None):
 
@@ -15,7 +19,7 @@ def chk_n_sell(token=None):
 	try:
 		my_stocks = get_my_stocks(token=token)
 		if not my_stocks:
-			print("보유 종목이 없습니다.")
+			logger.info("보유 종목이 없습니다.")
 			return True
 			
 		for stock in my_stocks:
@@ -26,19 +30,19 @@ def chk_n_sell(token=None):
 				time.sleep(0.5)
 				sell_result = sell_stock(stock['stk_cd'].replace('A', ''), stock['rmnd_qty'], token=token)
 				if sell_result != 0:
-					print("매도 실패")
+					logger.info("매도 실패")
 					return True
 
 				result_type = "익절" if pl_rt > TP_RATE else "손절"
 				result_emoji = "🔴" if pl_rt > TP_RATE else "🔵"
 				message = f'{result_emoji} {stock["stk_nm"]} {int(stock["rmnd_qty"])}주 {result_type} 완료 (수익율: {pl_rt}%)'
 				tel_send(message)
-				print(message)
+				logger.info(message)
 
 		return True  # 성공적으로 실행됨
 
 	except Exception as e:
-		print(f"오류 발생(chk_n_sell): {e}")
+		logger.info(f"오류 발생(chk_n_sell): {e}")
 		return False  # 예외 발생으로 실패
 
 if __name__ == "__main__":

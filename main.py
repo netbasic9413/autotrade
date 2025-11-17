@@ -5,6 +5,8 @@ from config import telegram_token
 from chat_command import ChatCommand
 from get_setting import get_setting
 from market_hour import MarketHour
+import logfile
+
 
 class MainApp:
 	def __init__(self):
@@ -15,6 +17,7 @@ class MainApp:
 		self.today_started = False  # 오늘 start가 실행되었는지 추적
 		self.today_stopped = False  # 오늘 stop이 실행되었는지 추적
 		self.last_check_date = None  # 마지막으로 확인한 날짜
+		self.logger = logfile.setup_log()
 		
 	def get_chat_updates(self):
 		"""텔레그램 채팅 업데이트를 가져옵니다."""
@@ -33,11 +36,11 @@ class MainApp:
 					
 					if 'message' in update and 'text' in update['message']:
 						text = update['message']['text']
-						print(f"받은 메시지: {text}")
+						self.logger.info(f"받은 메시지: {text}")
 						return text
 			return None
 		except Exception as e:
-			print(f"채팅 업데이트 가져오기 실패: {e}")
+			self.logger.info(f"채팅 업데이트 가져오기 실패: {e}")
 			return None
 	
 	
@@ -53,19 +56,19 @@ class MainApp:
 			self.last_check_date = today
 		
 		if MarketHour.is_market_start_time() and auto_start and not self.today_started:
-			print(f"장 시작 시간({MarketHour.MARKET_START_HOUR:02d}:{MarketHour.MARKET_START_MINUTE:02d})입니다. 자동으로 start 명령을 실행합니다.")
+			self.logger.info(f"장 시작 시간({MarketHour.MARKET_START_HOUR:02d}:{MarketHour.MARKET_START_MINUTE:02d})입니다. 자동으로 start 명령을 실행합니다.")
 			await self.chat_command.start()
 			self.today_started = True  # 오늘 start 실행 완료 표시
 		elif MarketHour.is_market_end_time() and not self.today_stopped:
-			print(f"장 종료 시간({MarketHour.MARKET_END_HOUR:02d}:{MarketHour.MARKET_END_MINUTE:02d})입니다. 자동으로 stop 명령을 실행합니다.")
+			self.logger.info(f"장 종료 시간({MarketHour.MARKET_END_HOUR:02d}:{MarketHour.MARKET_END_MINUTE:02d})입니다. 자동으로 stop 명령을 실행합니다.")
 			await self.chat_command.stop(False)  # auto_start를 false로 설정하지 않음
-			print("자동으로 계좌평가 보고서를 발송합니다.")
+			self.logger.info("자동으로 계좌평가 보고서를 발송합니다.")
 			await self.chat_command.report()  # 장 종료 시 report도 자동 발송
 			self.today_stopped = True  # 오늘 stop 실행 완료 표시
 	
 	async def run(self):
 		"""메인 실행 루프"""
-		print("채팅 모니터링을 시작합니다...")
+		self.logger.info("채팅 모니터링을 시작합니다...")
 		
 		try:
 			while self.keep_running:
@@ -81,7 +84,7 @@ class MainApp:
 				await asyncio.sleep(1)
 				
 		except KeyboardInterrupt:
-			print("\n프로그램을 종료합니다...")
+			self.logger.info("\n프로그램을 종료합니다...")
 			self.keep_running = False
 			await self.chat_command.stop(False)
 
