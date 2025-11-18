@@ -69,7 +69,6 @@ class ChatCommand:
 		try:
 			with open(self.settings_path, 'r', encoding='utf-8') as f:
 				settings = json.load(f)
-				json.dump(settings, f, ensure_ascii=False, indent=2)
 				tel_send(f"settings: {settings}")
 			return True
 
