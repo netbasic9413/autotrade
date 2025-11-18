@@ -27,6 +27,7 @@ def setup_log(log_dir="logs"):
     extension = ".log"
 
     # 3. 날짜를 포함한 새로운 파일 이름 생성
+    log_filename = None
     log_filename = f"{base_name}_{date_str}{extension}" # 예: autotrade_2025-11-17_103045.txt
 
     

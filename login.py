@@ -39,4 +39,4 @@ def fn_au10001():
 # 실행 구간
 if __name__ == '__main__':
 	token = fn_au10001()
-	logger.info("토큰: ",token)
+	logger.info("토큰: %s",token)

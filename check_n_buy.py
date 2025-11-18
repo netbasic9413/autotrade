@@ -21,7 +21,7 @@ def chk_n_buy(stk_cd, token=None):
 				logger.info("이미 보유 중입니다.")
 				return
 	except Exception as e:
-		logger.info("보유종목 조회 중 오류 발생:", e)
+		logger.info("보유종목 조회 중 오류 발생: %s", e)
 		return
 
 	time.sleep(0.3)
@@ -32,20 +32,20 @@ def chk_n_buy(stk_cd, token=None):
 			logger.info("잔고가 없습니다.")
 			return
 	except Exception as e:
-		logger.info("잔고 조회 중 오류 발생:", e)
+		logger.info("잔고 조회 중 오류 발생: %s", e)
 		return
 
 	buy_ratio = get_setting('buy_ratio', 5.0) / 100
 
 	expense = balance * buy_ratio
-	logger.info('지출할 금액:', expense)
+	logger.info('지출할 금액: %s', expense)
 
 	time.sleep(0.3)
 
 	try:
 		bid = int(check_bid(stk_cd, token=token))
 	except Exception as e:
-		logger.info("호가 조회 중 오류 발생:", e)
+		logger.info("호가 조회 중 오류 발생: %s", e)
 		return
 
 	if bid > 0:
@@ -53,7 +53,7 @@ def chk_n_buy(stk_cd, token=None):
 		if ord_qty == 0:
 			logger.info("주문할 주식 수량이 0입니다.")
 			return
-		logger.info('주문할 주식 수량:', ord_qty)
+		logger.info('주문할 주식 수량: %d', ord_qty)
 
 	time.sleep(0.3)
 
@@ -63,7 +63,7 @@ def chk_n_buy(stk_cd, token=None):
 			logger.info("주문 실패")
 			return
 	except Exception as e:
-		logger.info("주문 중 오류 발생:", e)
+		logger.info("주문 중 오류 발생: %s", e)
 		return
 
 	time.sleep(0.3)
@@ -71,7 +71,7 @@ def chk_n_buy(stk_cd, token=None):
 	try:
 		stock_name = stock_info(stk_cd, token=token)
 	except Exception as e:
-		logger.info("종목정보 조회 중 오류 발생:", e)
+		logger.info("종목정보 조회 중 오류 발생: %s", e)
 		return
 
 	message = f'{stock_name} {ord_qty}주 매수 완료'

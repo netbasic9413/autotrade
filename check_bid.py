@@ -34,10 +34,10 @@ def fn_ka10004(stk_cd, cont_yn='N', next_key='', token=None):
 	try:
 		sel_fpr_bid = abs(float(sel_fpr_bid_raw))
 	except (ValueError, TypeError):
-		logger.info("매도최우선호가를 숫자로 변환할 수 없습니다:", sel_fpr_bid_raw)
+		logger.info("매도최우선호가를 숫자로 변환할 수 없습니다: %s", sel_fpr_bid_raw)
 		sel_fpr_bid = 0
 
-	logger.info('매도최우선호가(절대값): ', sel_fpr_bid)
+	logger.info('매도최우선호가(절대값): %s', sel_fpr_bid)
 
 	return sel_fpr_bid
 

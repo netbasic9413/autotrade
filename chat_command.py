@@ -64,6 +64,20 @@ class ChatCommand:
 			self.logger.info(f"설정 업데이트 실패: {e}")
 			return False
 	
+ 
+	def get_csetting(self):
+		try:
+			with open(self.settings_path, 'r', encoding='utf-8') as f:
+				settings = json.load(f)
+				json.dump(settings, f, ensure_ascii=False, indent=2)
+				tel_send(f"settings: {settings}")
+			return True
+
+		except Exception as e:
+			self.logger.info(f"설정 가져오는데 실패: {e}")
+			return False
+			
+ 
 	async def _check_n_sell_loop(self):
 		"""check_n_sell을 1초마다 실행하는 백그라운드 루프"""
 		failure_count = 0  # 연속 실패 횟수 카운터
@@ -356,6 +370,18 @@ class ChatCommand:
 		except Exception as e:
 			tel_send(f"❌ brt 명령어 실행 중 오류: {e}")
 			return False
+
+	async def cget(self):
+		try:
+			if self.get_csetting():
+				return True
+			else:
+				tel_send("❌ 설정을 가져오는데 실패했습니다")
+				return False
+		except Exception as e:
+			tel_send(f"❌ cget 명령어 실행 중 오류: {e}")
+			return False
+				
 	
 	async def condition(self, number=None):
 		"""condition 명령어를 처리합니다 - 조건식 목록 조회 또는 search_seq 설정"""
@@ -484,6 +510,8 @@ class ChatCommand:
 				return False
 		elif command == 'help':
 			return await self.help()
+		elif command == 'cget':
+			return await self.cget()
 		elif command.startswith('tpr '):
 			# tpr 명령어 처리
 			parts = command.split()

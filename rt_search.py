@@ -54,7 +54,7 @@ class RealTimeSearch:
 				message = json.dumps(message)
 
 			await self.websocket.send(message)
-			self.logger.info(f'Message sent: {message}')
+			#self.logger.info(f'Message sent: {message}')
 
 	async def receive_messages(self):
 		"""서버에서 오는 메시지를 수신하여 출력합니다."""
@@ -69,7 +69,7 @@ class RealTimeSearch:
 				# 메시지 유형이 LOGIN일 경우 로그인 시도 결과 체크
 				if response.get('trnm') == 'LOGIN':
 					if response.get('return_code') != 0:
-						self.logger.info('로그인 실패하였습니다. : ', response.get('return_msg'))
+						self.logger.info('로그인 실패하였습니다. : %s', response.get('return_msg'))
 						await self.disconnect()
 					else:
 						self.logger.info('로그인 성공하였습니다.')
@@ -82,7 +82,7 @@ class RealTimeSearch:
 
 				# 메시지 유형이 PING일 경우 수신값 그대로 송신
 				elif response.get('trnm') == 'PING':
-					self.logger.info(f'PING 메시지 수신: {response}')
+					#self.logger.info(f'PING 메시지 수신: {response}')
 					await self.send_message(response)
 
 				if response.get('trnm') != 'PING':

@@ -39,7 +39,7 @@ def fn_kt00001(cont_yn='N', next_key='', token=None):
 	logger.info('Body: %s', json.dumps(response.json(), indent=4, ensure_ascii=False))  # JSON 응답을 파싱하여 출력
 
 	entry = response.json()['entr']
-	logger.info('예수금: ', entry)
+	logger.info('예수금: %s', entry)
 	return entry
 
 # 실행 구간
