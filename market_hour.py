@@ -4,10 +4,10 @@ class MarketHour:
 	"""장 시간 관련 상수 및 메서드를 관리하는 클래스"""
 	
 	# 장 시작/종료 시간 상수
-	MARKET_START_HOUR = 9
+	MARKET_START_HOUR = 8
 	MARKET_START_MINUTE = 0
-	MARKET_END_HOUR = 15
-	MARKET_END_MINUTE = 30
+	MARKET_END_HOUR = 20
+	MARKET_END_MINUTE = 0
 	
 	@staticmethod
 	def _is_weekday():

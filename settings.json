@@ -1,8 +1,10 @@
 {
   "process_name": "모의",
-  "auto_start": true,
-  "search_seq": "4",
-  "take_profit_rate": 2.0,
-  "stop_loss_rate": -5.0,
-  "buy_ratio": 2.0
+  "auto_start": false,
+  "search_seq": "3",
+  "take_profit_rate": 5.0,
+  "stop_loss_rate": -2.0,
+  "buy_ratio": 2.0,
+  "bstop": false,
+  "sstop": false
 }
