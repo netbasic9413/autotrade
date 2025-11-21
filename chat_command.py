@@ -620,9 +620,9 @@ class ChatCommand:
 • start - 실시간 검색과 자동 매도 체크 시작
 • stop - 실시간 검색과 자동 매도 체크 중지
 • report 또는 r - 계좌평가현황 보고서 발송
-• condition - 조건식 목록 조회
-• condition {번호} - 검색 조건식 변경 (예: condition 0)
-• acc = 계좌정보
+• cond - 조건식 목록 조회
+• cond {번호} - 검색 조건식 변경 (예: cond 0)
+• acc - 계좌정보
 • bstop - 실시간 매수 정지
 • bgo - 실시간 매수 다시 시작
 • sstop - 실시간 매도 정지
@@ -652,60 +652,65 @@ class ChatCommand:
             tel_send(f"❌ help 명령어 실행 중 오류: {e}")
             return False
 
-    async def process_command(self, text):
+    async def process_command(self, text, ps_name):
         """텍스트 명령어를 처리합니다."""
         # 텍스트 trim 및 소문자 변환
         command = text.strip().lower()
+        str_split = command.split("@")
 
-        if command == "start":
+        if str_split[0] != ps_name:
+            # tel_send("❌ 해당 process_name 이 아닙니다.)")
+            return False
+
+        if str_split[1] == "start":
             return await self.start()
-        elif command == "stop":
+        elif str_split[1] == "stop":
             return await self.stop(True)  # 사용자 명령이므로 auto_start를 false로 설정
-        elif command == "report" or command == "r":
+        elif str_split[1] == "report" or str_split[1] == "r":
             return await self.report()
-        elif command == "acc":
+        elif str_split[1] == "acc":
             return await self.acc()
-        elif command == "condition":
+        elif str_split[1] == "cond":
             return await self.condition()
-        elif command.startswith("condition "):
+        elif str_split[1].startswith("cond "):
             # condition 명령어 처리
-            parts = command.split()
+            parts = str_split[1].split()
             if len(parts) == 2:
                 return await self.condition(parts[1])
             else:
-                tel_send("❌ 사용법: condition {번호} (예: condition 0)")
+                tel_send("❌ 사용법: cond {번호} (예: cond 0)")
                 return False
-        elif command == "help":
+        elif str_split[1] == "help":
             return await self.help()
-        elif command == "cget":
+        elif str_split[1] == "cget":
             return await self.cget()
-        elif command == "bstop":
+        elif str_split[1] == "bstop":
             return await self.buy_stop()
-        elif command == "bgo":
+        elif str_split[1] == "bgo":
             return await self.buy_go()
-        elif command == "sstop":
+        elif str_split[1] == "sstop":
             return await self.sell_stop()
-        elif command == "sgo":
+        elif str_split[1] == "sgo":
             return await self.sell_go()
-        elif command.startswith("tpr "):
+        elif str_split[1].startswith("tpr "):
             # tpr 명령어 처리
-            parts = command.split()
+            parts = str_split[1].split()
             if len(parts) == 2:
                 return await self.tpr(parts[1])
             else:
                 tel_send("❌ 사용법: tpr {숫자} (예: tpr 5)")
                 return False
-        elif command.startswith("slr "):
+        elif str_split[1].startswith("slr "):
             # slr 명령어 처리
-            parts = command.split()
+            parts = str_split[1].split()
             if len(parts) == 2:
                 return await self.slr(parts[1])
             else:
                 tel_send("❌ 사용법: slr {숫자} (예: slr -10)")
                 return False
-        elif command.startswith("brt "):
+        elif str_split[1].startswith("brt "):
             # brt 명령어 처리
-            parts = command.split()
+            parts = str_split[1].split()
             if len(parts) == 2:
                 return await self.brt(parts[1])
             else:

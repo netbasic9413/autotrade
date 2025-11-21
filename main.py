@@ -71,11 +71,12 @@ class MainApp:
         self.logger.info("채팅 모니터링을 시작합니다...")
 
         try:
+            get_process_name = get_setting("process_name", "")
             while self.keep_running:
                 # 채팅 메시지 확인
                 message = self.get_chat_updates()
                 if message:
-                    await self.chat_command.process_command(message)
+                    await self.chat_command.process_command(message, get_process_name)
 
                 # 장 시작/종료 시간 확인
                 await self.check_market_timing()
