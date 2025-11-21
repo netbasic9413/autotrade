@@ -1,6 +1,6 @@
 {
   "process_name": "b",
-  "auto_start": false,
+  "auto_start": true,
   "search_seq": "4",
   "take_profit_rate": 10.0,
   "stop_loss_rate": -5.0,

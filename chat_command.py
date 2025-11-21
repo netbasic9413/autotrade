@@ -10,6 +10,7 @@ from market_hour import MarketHour
 from get_seq import get_condition_list
 from login import fn_au10001
 from get_setting import get_setting
+from check_bal import fn_kt00001
 import logfile
 
 
@@ -382,6 +383,46 @@ class ChatCommand:
             tel_send(f"❌ report 명령어 실행 중 오류: {e}")
             return False
 
+    async def dep(self):
+        """dep 명령을 처리"""
+        try:
+            # 토큰이 없으면 새로 발급
+            if not self.token:
+                token = self.get_token()
+                self.token = token
+                if not token:
+                    tel_send("❌ 토큰 발급에 실패했습니다")
+                    return False
+
+            try:
+                balance = await asyncio.wait_for(
+                    asyncio.get_event_loop().run_in_executor(
+                        None, fn_kt00001, "N", "", self.token
+                    ),
+                    timeout=10.0,
+                )
+            except asyncio.TimeoutError:
+                tel_send(
+                    "⏰ 서버로부터 응답이 늦어지고 있습니다. 나중에 다시 시도해주세요."
+                )
+                return False
+
+            if not balance:
+                tel_send("📊 예수금 내역요청 데이터가 없습니다.")
+                return False
+
+            f_balance = float(balance)
+
+            message = "📊 [예수금 내역]\n\n"
+            message += f"   예수금: {f_balance:,.0f}원\n"
+
+            tel_send(message)
+            return True
+
+        except Exception as e:
+            tel_send(f"❌ dep 명령어 실행 중 오류: {e}")
+            return False
+
     async def acc(self):
         """acc 명령어를 처리합니다 - acc_balance 실행 결과를 텔레그램으로 발송"""
         try:
@@ -410,6 +451,8 @@ class ChatCommand:
                 tel_send("📊 계좌평가잔고내역요청 데이터가 없습니다.")
                 return False
 
+            # balance = int(get_balance(self.get_token()))
+
             # 데이터 정리 및 포맷팅
             message = "📊 [계좌평가잔고내역]\n\n"
 
@@ -431,6 +474,8 @@ class ChatCommand:
             message += f"   총평가금액: {total_evlt_amt:,.0f}원\n"
             message += f"   총평가손익금: {total_evlt_pl:,.0f}원\n"
             message += f"   총수익률: {total_prft_rt:+.2f}%\n"
+            # message += f"   예수금: {balance:,.0f}원\n"
+
             # message += f"   매입가: {pur_price:,.0f}원\n"
             # message += f"   보유수량: {have_qty:,}주\n\n"
             # message += f"   매입금액: {pur_amount:,.0f}원\n"
@@ -617,6 +662,8 @@ class ChatCommand:
             help_message = """🤖 [키움 REST API 봇 명령어 가이드]
 
 [기본 명령어]
+모든 명령은 process_name@ 으로 프로그램 프로세스를 구분하여 실행한다.
+ex) a@start (a 프로세스의 start명령 수행)
 • start - 실시간 검색과 자동 매도 체크 시작
 • stop - 실시간 검색과 자동 매도 체크 중지
 • report 또는 r - 계좌평가현황 보고서 발송
@@ -638,10 +685,10 @@ class ChatCommand:
 • tpr 5 (수익률 5%에서 매도)
 • slr 10 (손실률 -10%에서 매도)
 • brt 3 (매수 비율 3%로 설정)
-• condition 0 (0번 조건식으로 변경)
+• cond 0 (0번 조건식으로 변경)
 
 [도움말]
-• help - 이 도움말 표시
+• help 또는 h - 이 도움말 표시
 
 모든 명령어는 퍼센트 단위로 입력하세요."""
 
@@ -670,6 +717,8 @@ class ChatCommand:
             return await self.report()
         elif str_split[1] == "acc":
             return await self.acc()
+        elif str_split[1] == "dep":
+            return await self.dep()
         elif str_split[1] == "cond":
             return await self.condition()
         elif str_split[1].startswith("cond "):
@@ -680,7 +729,7 @@ class ChatCommand:
             else:
                 tel_send("❌ 사용법: cond {번호} (예: cond 0)")
                 return False
-        elif str_split[1] == "help":
+        elif str_split[1] == "help" or str_split[1] == "h":
             return await self.help()
         elif str_split[1] == "cget":
             return await self.cget()
