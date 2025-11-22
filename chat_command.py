@@ -662,8 +662,6 @@ class ChatCommand:
             help_message = """🤖 [키움 REST API 봇 명령어 가이드]
 
 [기본 명령어]
-모든 명령은 process_name@ 으로 프로그램 프로세스를 구분하여 실행한다.
-ex) a@start (a 프로세스의 start명령 수행)
 • start - 실시간 검색과 자동 매도 체크 시작
 • stop - 실시간 검색과 자동 매도 체크 중지
 • report 또는 r - 계좌평가현황 보고서 발송
@@ -675,6 +673,7 @@ ex) a@start (a 프로세스의 start명령 수행)
 • sstop - 실시간 매도 정지
 • sgo - 실시간 매도 다시 시작
 • cget - 설정 가져오기
+• dep - 예수금 조회
 
 [설정 명령어]
 • tpr {숫자} - 익절 기준 설정 (예: tpr 5)
