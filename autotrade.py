@@ -6,6 +6,12 @@ from chat_command import ChatCommand
 from get_setting import get_setting
 from market_hour import MarketHour
 import logfile
+import threading
+import time
+import queue
+
+
+data_q = queue.Queue()
 
 
 class MainApp:
@@ -66,17 +72,44 @@ class MainApp:
             await self.chat_command.report()  # 장 종료 시 report도 자동 발송
             self.today_stopped = True  # 오늘 stop 실행 완료 표시
 
+    def keyboard_input_thread(callback, self):
+        """키보드 입력을 처리하는 스레드 함수"""
+        while True:
+            try:
+                print("입력 명령> ")
+                user_input = input()
+
+                try:
+                    data_q.put_nowait(user_input)
+
+                except data_q.Full:
+                    time.sleep(1)
+
+            except EOFError:
+                break
+            except KeyboardInterrupt:
+                break
+
     async def run(self):
         """메인 실행 루프"""
-        self.logger.info("채팅 모니터링을 시작합니다...")
+        self.logger.info("[Bot 모니터링을 시작합니다...]\n")
 
         try:
-            get_process_name = get_setting("process_name", "")
             while self.keep_running:
+                # 키입력 명령 수신
+                # try:
+                if not data_q.empty():
+                    get_key_in = data_q.get_nowait()
+                    if get_key_in:
+                        await self.chat_command.process_command(get_key_in)
+
+                # except data_q.Empty:
+                #     time.sleep(0.1)
+
                 # 채팅 메시지 확인
                 message = self.get_chat_updates()
                 if message:
-                    await self.chat_command.process_command(message, get_process_name)
+                    await self.chat_command.process_command(message)
 
                 # 장 시작/종료 시간 확인
                 await self.check_market_timing()
@@ -92,7 +125,13 @@ class MainApp:
 
 async def main():
     app = MainApp()
+
+    # 키입력 받는 thread 생성
+    input_thread = threading.Thread(target=app.keyboard_input_thread, args=(app,))
+    input_thread.start()
+
     await app.run()
+    input_thread.join()
 
 
 if __name__ == "__main__":

@@ -698,7 +698,7 @@ class ChatCommand:
             tel_send(f"❌ help 명령어 실행 중 오류: {e}")
             return False
 
-    async def process_command(self, text, ps_name):
+    async def process_command(self, text):
         """텍스트 명령어를 처리합니다."""
         # 텍스트 trim 및 소문자 변환
         command = text.strip().lower()
