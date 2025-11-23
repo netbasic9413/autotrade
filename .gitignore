@@ -2,3 +2,5 @@
 logs
 main.spec
 *.spec
+build
+dist
