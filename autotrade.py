@@ -76,9 +76,9 @@ class MainApp:
         """키보드 입력을 처리하는 스레드 함수"""
         while True:
             try:
-                print("입력 명령> ")
+                self.logger.info("입력 명령> ")
                 user_input = input()
-
+                self.logger.info(user_input)
                 try:
                     data_q.put_nowait(user_input)
 

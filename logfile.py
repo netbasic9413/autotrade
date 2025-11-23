@@ -44,9 +44,9 @@ def setup_log(log_dir="logs"):
     logger.addHandler(stream_handler)
 
     # log를 파일에 출력
-    # file_handler = logging.handlers.TimedRotatingFileHandler(
-    #     filename=log_path, when="midnight", interval=1, encoding="utf-8"
-    # )  # S
+    file_handler = logging.handlers.TimedRotatingFileHandler(
+        filename=log_path, when="D", interval=1, encoding="utf-8"
+    )
 
     file_handler = logging.FileHandler(log_path, encoding="utf-8")
     # file_handler.suffix = 'log_%Y%m%d'  # 파일명 끝에 붙여줌; ex. log_20190811
