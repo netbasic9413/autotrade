@@ -2,6 +2,7 @@ import asyncio
 import requests
 import datetime
 from config import telegram_token
+from config import g_use_queue
 from chat_command import ChatCommand
 from get_setting import get_setting
 from market_hour import MarketHour
@@ -12,6 +13,8 @@ import queue
 
 
 data_q = queue.Queue()
+shared_ar = []
+lock = threading.Lock()
 
 
 class MainApp:
@@ -72,41 +75,64 @@ class MainApp:
             await self.chat_command.report()  # 장 종료 시 report도 자동 발송
             self.today_stopped = True  # 오늘 stop 실행 완료 표시
 
-    def keyboard_input_thread(callback, self):
+    def keyboard_input_thread(callback, self, event=None):
         """키보드 입력을 처리하는 스레드 함수"""
         while True:
             try:
-                self.logger.info("입력 명령> ")
-                user_input = input()
-                self.logger.info(user_input)
-                try:
-                    data_q.put_nowait(user_input)
-                    self.logger.info("put key in: %s", user_input)
+                if not g_use_queue:
+                    lock.acquire()
+                    self.logger.info("입력 명령> ")
+                    user_input = input()
+                    self.logger.info(user_input)
+                    try:
+                        shared_ar.append(user_input)
+                        event.set()
+                        self.logger.info("put key in: %s", user_input)
+                    except shared_ar.Full:
+                        time.sleep(1)
+                    finally:
+                        lock.release()
 
-                except data_q.Full:
-                    time.sleep(1)
+                else:
+                    self.logger.info("입력 명령> ")
+                    user_input = input()
+                    self.logger.info(user_input)
+                    try:
+                        data_q.put_nowait(user_input)
+                        self.logger.info("put key in: %s", user_input)
+                    except data_q.Full:
+                        time.sleep(1)
 
             except EOFError:
                 break
             except KeyboardInterrupt:
                 break
 
-    async def run(self):
+    async def run(self, event=None):
         """메인 실행 루프"""
         self.logger.info("[Bot 모니터링을 시작합니다...]\n")
 
         try:
             while self.keep_running:
                 # 키입력 명령 수신
-                # try:
-                if not data_q.empty():
-                    get_key_in = data_q.get_nowait()
-                    self.logger.info("get key in: %s", get_key_in)
-                    if get_key_in:
-                        await self.chat_command.process_command(get_key_in, True)
 
-                # except data_q.Empty:
-                #     time.sleep(0.1)
+                if g_use_queue:
+                    if not data_q.empty():
+                        get_key_in = data_q.get_nowait()
+                        self.logger.info("[queue] get key in: %s", get_key_in)
+                        if get_key_in:
+                            await self.chat_command.process_command(get_key_in, True)
+                else:  # event 사용
+                    while event.wait(timeout=0.1):
+                        if len(shared_ar) > 0:
+                            get_key_in = shared_ar.pop(0)
+                            self.logger.info("[event] get key in: %s", get_key_in)
+                            if get_key_in:
+                                await self.chat_command.process_command(
+                                    get_key_in, True
+                                )
+                        else:
+                            break
 
                 # 채팅 메시지 확인
                 message = self.get_chat_updates()
@@ -127,12 +153,14 @@ class MainApp:
 
 async def main():
     app = MainApp()
-
+    event = None
+    if not g_use_queue:
+        event = threading.Event()
     # 키입력 받는 thread 생성
-    input_thread = threading.Thread(target=app.keyboard_input_thread, args=(app,))
+    input_thread = threading.Thread(target=app.keyboard_input_thread, args=(app, event))
     input_thread.start()
 
-    await app.run()
+    await app.run(event)
     input_thread.join()
 
 

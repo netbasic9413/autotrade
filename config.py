@@ -1,5 +1,6 @@
 is_trial_trading = True
 
+g_use_queue = True
 
 real_app_key = ""
 real_app_secret = ""
@@ -26,9 +27,9 @@ socket_url = trial_socket_url if is_trial_trading else real_socket_url
 
 
 # telegram bot 1
-telegram_chat_id = "7796532423"
-telegram_token = "8429550471:AAF5yF2KAPD9Pbq6Pv-VQLkdSTmhCaIPTxY"
+# telegram_chat_id = "7796532423"
+# telegram_token = "8429550471:AAF5yF2KAPD9Pbq6Pv-VQLkdSTmhCaIPTxY"
 
 # telegram bot 2
-# telegram_chat_id = "7796532423"
-# telegram_token = "8387867127:AAEPHbNO9p0N52qWiMsqb-MlHXyRrbxzgOA"
+telegram_chat_id = "7796532423"
+telegram_token = "8387867127:AAEPHbNO9p0N52qWiMsqb-MlHXyRrbxzgOA"
