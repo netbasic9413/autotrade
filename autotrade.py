@@ -81,6 +81,7 @@ class MainApp:
                 self.logger.info(user_input)
                 try:
                     data_q.put_nowait(user_input)
+                    self.logger.info("put key in: %s", user_input)
 
                 except data_q.Full:
                     time.sleep(1)
@@ -100,8 +101,9 @@ class MainApp:
                 # try:
                 if not data_q.empty():
                     get_key_in = data_q.get_nowait()
+                    self.logger.info("get key in: %s", get_key_in)
                     if get_key_in:
-                        await self.chat_command.process_command(get_key_in)
+                        await self.chat_command.process_command(get_key_in, True)
 
                 # except data_q.Empty:
                 #     time.sleep(0.1)
@@ -115,7 +117,7 @@ class MainApp:
                 await self.check_market_timing()
 
                 # 1초 대기
-                await asyncio.sleep(1)
+                # await asyncio.sleep(1)
 
         except KeyboardInterrupt:
             self.logger.info("\n프로그램을 종료합니다...")

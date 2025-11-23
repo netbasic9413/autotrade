@@ -23,7 +23,7 @@ class ChatCommand:
         self.token = None  # 현재 사용 중인 토큰
         self.logger = logfile.setup_log()
 
-    def get_token(self):
+    def get_token(self, key_in=False):
         """새로운 토큰을 발급받습니다."""
         try:
             token = fn_au10001()
@@ -38,11 +38,16 @@ class ChatCommand:
             self.logger.info(f"토큰 발급 중 오류: {e}")
             return None
 
-    async def _on_connection_closed(self):
+    async def _on_connection_closed(self, key_in=False):
         """WebSocket 연결이 종료되었을 때 호출되는 콜백 함수"""
         try:
             self.logger.info("WebSocket 연결이 종료되어 자동으로 stop을 실행합니다.")
-            tel_send("⚠️ 서버 연결이 끊어져 자동으로 서비스를 재시작합니다.")
+            if not key_in:
+                tel_send("⚠️ 서버 연결이 끊어져 자동으로 서비스를 재시작합니다.")
+            else:
+                self.logger.info(
+                    "[cli] ⚠️ 서버 연결이 끊어져 자동으로 서비스를 재시작합니다."
+                )
             await self.stop(set_auto_start_false=False)  # auto_start는 그대로 유지
 
             self.logger.info("1초 후 서비스를 재시작합니다.")
@@ -50,7 +55,10 @@ class ChatCommand:
             await self.start()
         except Exception as e:
             self.logger.info(f"연결 종료 콜백 실행 중 오류: {e}")
-            tel_send(f"❌ 연결 종료 처리 중 오류가 발생했습니다: {e}")
+            if not key_in:
+                tel_send(f"❌ 연결 종료 처리 중 오류가 발생했습니다: {e}")
+            else:
+                self.logger.info(f"[cli]❌ 연결 종료 처리 중 오류가 발생했습니다: {e}")
 
     def update_setting(self, key, value):
         """settings.json 파일의 특정 키 값을 업데이트합니다."""
@@ -68,7 +76,7 @@ class ChatCommand:
             self.logger.info(f"설정 업데이트 실패: {e}")
             return False
 
-    def get_csetting(self):
+    def get_csetting(self, key_in=False):
         try:
             with open(self.settings_path, "r", encoding="utf-8") as f:
                 settings = json.load(f)
@@ -92,14 +100,17 @@ class ChatCommand:
             message += f"   bstop: {bstop}\n"
             message += f"   sstop: {sstop}\n"
 
-            tel_send(message)
+            if not key_in:
+                tel_send(message)
+            else:
+                self.logger.info("[cli] %s", message)
             return True
 
         except Exception as e:
             self.logger.info(f"설정 가져오는데 실패: {e}")
             return False
 
-    async def _check_n_sell_loop(self):
+    async def _check_n_sell_loop(self, key_in=False):
         """check_n_sell을 1초마다 실행하는 백그라운드 루프"""
         get_sell_stop = get_setting("sstop", False)
         failure_count = 0  # 연속 실패 횟수 카운터
@@ -128,9 +139,14 @@ class ChatCommand:
                             self.logger.info(
                                 f"chk_n_sell이 {max_failures}번 연속 실패하여 자동 재시작을 실행합니다."
                             )
-                            tel_send(
-                                f"⚠️ chk_n_sell이 {max_failures}번 연속 실패하여 자동 재시작합니다."
-                            )
+                            if not key_in:
+                                tel_send(
+                                    f"⚠️ chk_n_sell이 {max_failures}번 연속 실패하여 자동 재시작합니다."
+                                )
+                            else:
+                                self.logger.info(
+                                    f"⚠️ chk_n_sell이 {max_failures}번 연속 실패하여 자동 재시작합니다."
+                                )
 
                             # 현재 루프 중단
                             break
@@ -146,9 +162,14 @@ class ChatCommand:
                         self.logger.info(
                             f"chk_n_sell이 {max_failures}번 연속 실패하여 자동 재시작을 실행합니다."
                         )
-                        tel_send(
-                            f"⚠️ 서버의 계좌 확인 기능 문제로 자동으로 서비스를 재시작합니다."
-                        )
+                        if not key_in:
+                            tel_send(
+                                f"⚠️ 서버의 계좌 확인 기능 문제로 자동으로 서비스를 재시작합니다."
+                            )
+                        else:
+                            self.logger.info(
+                                f"[cli]⚠️ 서버의 계좌 확인 기능 문제로 자동으로 서비스를 재시작합니다."
+                            )
 
                         # 현재 루프 중단
                         break
@@ -167,9 +188,14 @@ class ChatCommand:
                 self.process_command("start")
             except Exception as e:
                 self.logger.info(f"자동 재시작 중 오류: {e}")
-                tel_send(f"❌ 자동 재시작 중 오류가 발생했습니다: {e}")
+                if not key_in:
+                    tel_send(f"❌ 자동 재시작 중 오류가 발생했습니다: {e}")
+                else:
+                    self.logger.info(
+                        f"[cli] ❌ 자동 재시작 중 오류가 발생했습니다: {e}"
+                    )
 
-    async def start(self):
+    async def start(self, key_in=False):
         """start 명령어를 처리합니다."""
         try:
             # 기존 check_n_sell 태스크가 실행 중이면 정지
@@ -184,20 +210,31 @@ class ChatCommand:
             # 새로운 토큰 발급
             token = self.get_token()
             if not token:
-                tel_send("❌ 토큰 발급에 실패했습니다")
+                if not key_in:
+                    tel_send("❌ 토큰 발급에 실패했습니다")
+                else:
+                    self.logger.info("[cli] ❌ 토큰 발급에 실패했습니다")
                 return False
 
             # auto_start를 true로 설정
             if not self.update_setting("auto_start", True):
-                tel_send("❌ 설정 파일 업데이트 실패")
+                if not key_in:
+                    tel_send("❌ 설정 파일 업데이트 실패")
+                else:
+                    self.logger.info("[cli] ❌ 설정 파일 업데이트 실패")
                 return False
 
             # andy
             # 장이 열리지 않았을 때는 auto_start만 설정하고 메시지 전송
             if not MarketHour.is_market_open_time():
-                tel_send(
-                    f"⏰ 장이 열리지 않았습니다. 장 시작 시간({MarketHour.MARKET_START_HOUR:02d}:{MarketHour.MARKET_START_MINUTE:02d})에 자동으로 시작됩니다."
-                )
+                if not key_in:
+                    tel_send(
+                        f"⏰ 장이 열리지 않았습니다. 장 시작 시간({MarketHour.MARKET_START_HOUR:02d}:{MarketHour.MARKET_START_MINUTE:02d})에 자동으로 시작됩니다."
+                    )
+                else:
+                    self.logger.info(
+                        f"[cli] ⏰ 장이 열리지 않았습니다. 장 시작 시간({MarketHour.MARKET_START_HOUR:02d}:{MarketHour.MARKET_START_MINUTE:02d})에 자동으로 시작됩니다."
+                    )
                 return True
 
             # WebSocket 연결 재시도 로직
@@ -214,7 +251,12 @@ class ChatCommand:
                         self.check_n_sell_task = asyncio.create_task(
                             self._check_n_sell_loop()
                         )
-                        tel_send("✅ 실시간 검색과 자동 매도 체크가 시작되었습니다")
+                        if not key_in:
+                            tel_send("✅ 실시간 검색과 자동 매도 체크가 시작되었습니다")
+                        else:
+                            self.logger.info(
+                                "[cli] ✅ 실시간 검색과 자동 매도 체크가 시작되었습니다"
+                            )
                         return True
                     else:
                         # 연결 실패 시 재시도
@@ -222,9 +264,14 @@ class ChatCommand:
                             self.logger.info(
                                 f"WebSocket 연결 실패, {retry_delay}초 후 재시도합니다... ({attempt + 1}/{max_retries})"
                             )
-                            tel_send(
-                                f"⚠️ WebSocket 연결 실패, {retry_delay}초 후 재시도합니다... ({attempt + 1}/{max_retries})"
-                            )
+                            if not key_in:
+                                tel_send(
+                                    f"⚠️ WebSocket 연결 실패, {retry_delay}초 후 재시도합니다... ({attempt + 1}/{max_retries})"
+                                )
+                            else:
+                                self.logger.info(
+                                    f"[cli] ⚠️ WebSocket 연결 실패, {retry_delay}초 후 재시도합니다... ({attempt + 1}/{max_retries})"
+                                )
 
                             # 지수 백오프: 재시도 간격을 점진적으로 증가
                             await asyncio.sleep(retry_delay)
@@ -239,9 +286,14 @@ class ChatCommand:
                             self.logger.info(
                                 f"WebSocket 연결이 {max_retries}번 연속 실패했습니다."
                             )
-                            tel_send(
-                                f"❌ WebSocket 연결이 {max_retries}번 연속 실패했습니다. 나중에 다시 'start' 명령어를 입력해주세요."
-                            )
+                            if not key_in:
+                                tel_send(
+                                    f"❌ WebSocket 연결이 {max_retries}번 연속 실패했습니다. 나중에 다시 'start' 명령어를 입력해주세요."
+                                )
+                            else:
+                                self.logger.info(
+                                    f"[cli] ❌ WebSocket 연결이 {max_retries}번 연속 실패했습니다. 나중에 다시 'start' 명령어를 입력해주세요."
+                                )
                             return False
 
                 except Exception as e:
@@ -249,9 +301,14 @@ class ChatCommand:
                         self.logger.info(
                             f"WebSocket 연결 중 오류 발생, {retry_delay}초 후 재시도합니다... ({attempt + 1}/{max_retries}): {e}"
                         )
-                        tel_send(
-                            f"⚠️ WebSocket 연결 중 오류 발생, {retry_delay}초 후 재시도합니다... ({attempt + 1}/{max_retries})"
-                        )
+                        if not key_in:
+                            tel_send(
+                                f"⚠️ WebSocket 연결 중 오류 발생, {retry_delay}초 후 재시도합니다... ({attempt + 1}/{max_retries})"
+                            )
+                        else:
+                            self.logger.info(
+                                f"[cli] ⚠️ WebSocket 연결 중 오류 발생, {retry_delay}초 후 재시도합니다... ({attempt + 1}/{max_retries})"
+                            )
 
                         await asyncio.sleep(retry_delay)
                         retry_delay = min(retry_delay * 1.5, 10)  # 최대 10초까지
@@ -265,26 +322,39 @@ class ChatCommand:
                         self.logger.info(
                             f"WebSocket 연결이 {max_retries}번 연속 실패했습니다: {e}"
                         )
-                        tel_send(
-                            f"❌ WebSocket 연결이 {max_retries}번 연속 실패했습니다: {e}"
-                        )
+                        if not key_in:
+                            tel_send(
+                                f"❌ WebSocket 연결이 {max_retries}번 연속 실패했습니다: {e}"
+                            )
+                        else:
+                            self.logger.info(
+                                f"[cli] ❌ WebSocket 연결이 {max_retries}번 연속 실패했습니다: {e}"
+                            )
                         return False
 
             return False
 
         except Exception as e:
-            tel_send(
-                f"❌ start 명령어 실행 중 오류: {e}\n계속 재시작이 되지 않으면 'start' 명령어를 다시 입력해주세요."
-            )
+            if not key_in:
+                tel_send(
+                    f"❌ start 명령어 실행 중 오류: {e}\n계속 재시작이 되지 않으면 'start' 명령어를 다시 입력해주세요."
+                )
+            else:
+                self.logger.info(
+                    f"[cli]❌ start 명령어 실행 중 오류: {e}\n계속 재시작이 되지 않으면 'start' 명령어를 다시 입력해주세요."
+                )
             return False
 
-    async def stop(self, set_auto_start_false=True):
+    async def stop(self, set_auto_start_false=True, key_in=False):
         """stop 명령어를 처리합니다."""
         try:
             # auto_start 설정 (사용자 명령일 때만 false로 설정)
             if set_auto_start_false:
                 if not self.update_setting("auto_start", False):
-                    tel_send("❌ 설정 파일 업데이트 실패")
+                    if not key_in:
+                        tel_send("❌ 설정 파일 업데이트 실패")
+                    else:
+                        self.logger.info("[cli]❌ 설정 파일 업데이트 실패")
                     return False
 
             # check_n_sell 백그라운드 태스크 정지
@@ -300,17 +370,28 @@ class ChatCommand:
             success = await self.rt_search.stop()
 
             if success:
-                tel_send("✅ 실시간 검색과 자동 매도 체크가 중지되었습니다")
+                if not key_in:
+                    tel_send("✅ 실시간 검색과 자동 매도 체크가 중지되었습니다")
+                else:
+                    self.logger.info(
+                        "[cli]✅ 실시간 검색과 자동 매도 체크가 중지되었습니다"
+                    )
                 return True
             else:
-                tel_send("❌ 실시간 검색 중지에 실패했습니다")
+                if not key_in:
+                    tel_send("❌ 실시간 검색 중지에 실패했습니다")
+                else:
+                    self.logger.info("[cli]❌ 실시간 검색 중지에 실패했습니다")
                 return False
 
         except Exception as e:
-            tel_send(f"❌ stop 명령어 실행 중 오류: {e}")
+            if not key_in:
+                tel_send(f"❌ stop 명령어 실행 중 오류: {e}")
+            else:
+                self.logger.info(f"[cli] ❌ stop 명령어 실행 중 오류: {e}")
             return False
 
-    async def report(self):
+    async def report(self, key_in=False):
         """report 명령어를 처리합니다 - acc_val 실행 결과를 텔레그램으로 발송"""
         try:
             # 토큰이 없으면 새로 발급
@@ -318,7 +399,7 @@ class ChatCommand:
                 token = self.get_token()
                 if not token:
                     tel_send("❌ 토큰 발급에 실패했습니다")
-                    return False
+                return False
 
             # acc_val 실행 (타임아웃 10초)
             try:
@@ -329,13 +410,21 @@ class ChatCommand:
                     timeout=10.0,
                 )
             except asyncio.TimeoutError:
-                tel_send(
-                    "⏰ 서버로부터 응답이 늦어지고 있습니다. 나중에 다시 시도해주세요."
-                )
+                if not key_in:
+                    tel_send(
+                        "⏰ 서버로부터 응답이 늦어지고 있습니다. 나중에 다시 시도해주세요."
+                    )
+                else:
+                    self.logger.info(
+                        "[cli]⏰ 서버로부터 응답이 늦어지고 있습니다. 나중에 다시 시도해주세요."
+                    )
                 return False
 
             if not account_data:
-                tel_send("📊 계좌평가현황 데이터가 없습니다.")
+                if not key_in:
+                    tel_send("📊 계좌평가현황 데이터가 없습니다.")
+                else:
+                    self.logger.info("[cli]📊 계좌평가현황 데이터가 없습니다.")
                 return False
 
             # 데이터 정리 및 포맷팅
@@ -376,14 +465,20 @@ class ChatCommand:
             message += f"   평균 수익률: {avg_profit_loss:+.2f}%\n"
             message += f"   총 평가손익: {total_pl_amt:,.0f}원\n"
 
-            tel_send(message)
+            if not key_in:
+                tel_send(message)
+            else:
+                self.logger.info(message)
             return True
 
         except Exception as e:
-            tel_send(f"❌ report 명령어 실행 중 오류: {e}")
+            if not key_in:
+                tel_send(f"❌ report 명령어 실행 중 오류: {e}")
+            else:
+                self.logger.info(f"[cli] ❌ report 명령어 실행 중 오류: {e}")
             return False
 
-    async def dep(self):
+    async def dep(self, key_in=False):
         """dep 명령을 처리"""
         try:
             # 토큰이 없으면 새로 발급
@@ -392,7 +487,7 @@ class ChatCommand:
                 self.token = token
                 if not token:
                     tel_send("❌ 토큰 발급에 실패했습니다")
-                    return False
+                return False
 
             try:
                 balance = await asyncio.wait_for(
@@ -402,13 +497,21 @@ class ChatCommand:
                     timeout=10.0,
                 )
             except asyncio.TimeoutError:
-                tel_send(
-                    "⏰ 서버로부터 응답이 늦어지고 있습니다. 나중에 다시 시도해주세요."
-                )
+                if not key_in:
+                    tel_send(
+                        "⏰ 서버로부터 응답이 늦어지고 있습니다. 나중에 다시 시도해주세요."
+                    )
+                else:
+                    self.logger.info(
+                        "[cli]⏰ 서버로부터 응답이 늦어지고 있습니다. 나중에 다시 시도해주세요."
+                    )
                 return False
 
             if not balance:
-                tel_send("📊 예수금 내역요청 데이터가 없습니다.")
+                if not key_in:
+                    tel_send("📊 예수금 내역요청 데이터가 없습니다.")
+                else:
+                    self.logger.info("[cli]📊 예수금 내역요청 데이터가 없습니다.")
                 return False
 
             f_balance = float(balance)
@@ -416,14 +519,20 @@ class ChatCommand:
             message = "📊 [예수금 내역]\n\n"
             message += f"   예수금: {f_balance:,.0f}원\n"
 
-            tel_send(message)
+            if not key_in:
+                tel_send(message)
+            else:
+                self.logger.info("[cli] %s", message)
             return True
 
         except Exception as e:
-            tel_send(f"❌ dep 명령어 실행 중 오류: {e}")
-            return False
+            if not key_in:
+                tel_send(f"❌ dep 명령어 실행 중 오류: {e}")
+            else:
+                self.logger.info(f"[cli] ❌ dep 명령어 실행 중 오류: {e}")
+                return False
 
-    async def acc(self):
+    async def acc(self, key_in=False):
         """acc 명령어를 처리합니다 - acc_balance 실행 결과를 텔레그램으로 발송"""
         try:
             # 토큰이 없으면 새로 발급
@@ -431,7 +540,7 @@ class ChatCommand:
                 token = self.get_token()
                 if not token:
                     tel_send("❌ 토큰 발급에 실패했습니다")
-                    return False
+                return False
 
             # acc_balance 실행 (타임아웃 10초)
             try:
@@ -442,13 +551,21 @@ class ChatCommand:
                     timeout=10.0,
                 )
             except asyncio.TimeoutError:
-                tel_send(
-                    "⏰ 서버로부터 응답이 늦어지고 있습니다. 나중에 다시 시도해주세요."
-                )
+                if not key_in:
+                    tel_send(
+                        "⏰ 서버로부터 응답이 늦어지고 있습니다. 나중에 다시 시도해주세요."
+                    )
+                else:
+                    self.logger.info(
+                        "[cli]⏰ 서버로부터 응답이 늦어지고 있습니다. 나중에 다시 시도해주세요."
+                    )
                 return False
 
             if not account_data:
-                tel_send("📊 계좌평가잔고내역요청 데이터가 없습니다.")
+                if not key_in:
+                    tel_send("📊 계좌평가잔고내역요청 데이터가 없습니다.")
+                else:
+                    self.logger.info("[cli] 📊 계좌평가잔고내역요청 데이터가 없습니다.")
                 return False
 
             # balance = int(get_balance(self.get_token()))
@@ -481,114 +598,193 @@ class ChatCommand:
             # message += f"   매입금액: {pur_amount:,.0f}원\n"
             # message += f"   평가금액: {eval_amount:,.0f}원\n"
 
-            tel_send(message)
+            if not key_in:
+                tel_send(message)
+            else:
+                self.logger.info("[cli] %s", message)
             return True
 
         except Exception as e:
-            tel_send(f"❌ acc 명령어 실행 중 오류: {e}")
+            if not key_in:
+                tel_send(f"❌ acc 명령어 실행 중 오류: {e}")
+            else:
+                self.logger.info(f"[cli] ❌ acc 명령어 실행 중 오류: {e}")
             return False
 
-    async def tpr(self, number):
+    async def tpr(self, number, key_in=False):
         """tpr 명령어를 처리합니다 - take_profit_rate 수정"""
         try:
             rate = float(number)
             if self.update_setting("take_profit_rate", rate):
-                tel_send(f"✅ 익절 기준이 {rate}%로 설정되었습니다")
+                if not key_in:
+                    tel_send(f"✅ 익절 기준이 {rate}%로 설정되었습니다")
+                else:
+                    self.logger.info(f"[cli] ✅ 익절 기준이 {rate}%로 설정되었습니다")
                 return True
             else:
-                tel_send("❌ 익절 기준 설정에 실패했습니다")
+                if not key_in:
+                    tel_send("❌ 익절 기준 설정에 실패했습니다")
+                else:
+                    self.logger.info("[cli] ❌ 익절 기준 설정에 실패했습니다")
                 return False
         except ValueError:
-            tel_send("❌ 잘못된 숫자 형식입니다. 예: tpr 5")
+            if not key_in:
+                tel_send("❌ 잘못된 숫자 형식입니다. 예: tpr 5")
+            else:
+                self.logger.info("[cli] ❌ 잘못된 숫자 형식입니다. 예: tpr 5")
             return False
         except Exception as e:
-            tel_send(f"❌ tpr 명령어 실행 중 오류: {e}")
+            if not key_in:
+                tel_send(f"❌ tpr 명령어 실행 중 오류: {e}")
+            else:
+                self.logger.info(f"[cli] ❌ tpr 명령어 실행 중 오류: {e}")
             return False
 
-    async def slr(self, number):
+    async def slr(self, number, key_in=False):
         """slr 명령어를 처리합니다 - stop_loss_rate 수정"""
         try:
             rate = float(number)
             if rate > 0:
                 rate = -rate
             if self.update_setting("stop_loss_rate", rate):
-                tel_send(f"✅ 손절 기준이 {rate}%로 설정되었습니다")
+                if not key_in:
+                    tel_send(f"✅ 손절 기준이 {rate}%로 설정되었습니다")
+                else:
+                    self.logger.info(f"[cli] ✅ 손절 기준이 {rate}%로 설정되었습니다")
                 return True
             else:
-                tel_send("❌ 손절 기준 설정에 실패했습니다")
+                if not key_in:
+                    tel_send("❌ 손절 기준 설정에 실패했습니다")
+                else:
+                    self.logger.info("[cli] ❌ 손절 기준 설정에 실패했습니다")
                 return False
         except ValueError:
-            tel_send("❌ 잘못된 숫자 형식입니다. 예: slr -10")
+            if not key_in:
+                tel_send("❌ 잘못된 숫자 형식입니다. 예: slr -10")
+            else:
+                self.logger.info("[cli] ❌ 잘못된 숫자 형식입니다. 예: slr -10")
             return False
         except Exception as e:
-            tel_send(f"❌ slr 명령어 실행 중 오류: {e}")
+            if not key_in:
+                tel_send(f"❌ slr 명령어 실행 중 오류: {e}")
+            else:
+                self.logger.info(f"[cli] ❌ slr 명령어 실행 중 오류: {e}")
             return False
 
-    async def brt(self, number):
+    async def brt(self, number, key_in=False):
         """brt 명령어를 처리합니다 - buy_ratio 수정"""
         try:
             ratio = float(number)
             if self.update_setting("buy_ratio", ratio):
-                tel_send(f"✅ 매수 비용 비율이 {ratio}%로 설정되었습니다")
+                if not key_in:
+                    tel_send(f"✅ 매수 비용 비율이 {ratio}%로 설정되었습니다")
+                else:
+                    self.logger.info(
+                        f"[cli] ✅ 매수 비용 비율이 {ratio}%로 설정되었습니다"
+                    )
                 return True
             else:
-                tel_send("❌ 매수 비용 비율 설정에 실패했습니다")
+                if not key_in:
+                    tel_send("❌ 매수 비용 비율 설정에 실패했습니다")
+                else:
+                    self.logger.info("[cli] ❌ 매수 비용 비율 설정에 실패했습니다")
                 return False
         except ValueError:
-            tel_send("❌ 잘못된 숫자 형식입니다. 예: brt 3")
+            if not key_in:
+                tel_send("❌ 잘못된 숫자 형식입니다. 예: brt 3")
+            else:
+                self.logger.info("[cli] ❌ 잘못된 숫자 형식입니다. 예: brt 3")
             return False
         except Exception as e:
-            tel_send(f"❌ brt 명령어 실행 중 오류: {e}")
+            if not key_in:
+                tel_send(f"❌ brt 명령어 실행 중 오류: {e}")
+            else:
+                self.logger.info(f"[cli] ❌ brt 명령어 실행 중 오류: {e}")
             return False
 
-    async def cget(self):
+    async def cget(self, key_in=False):
         try:
-            if self.get_csetting():
+            if self.get_csetting(key_in):
                 return True
             else:
-                tel_send("❌ 설정을 가져오는데 실패했습니다")
+                if not key_in:
+                    tel_send("❌ 설정을 가져오는데 실패했습니다")
+                else:
+                    self.logger.info("[cli] ❌ 설정을 가져오는데 실패했습니다")
                 return False
         except Exception as e:
-            tel_send(f"❌ cget 명령어 실행 중 오류: {e}")
+            if not key_in:
+                tel_send(f"❌ cget 명령어 실행 중 오류: {e}")
+            else:
+                self.logger.info(f"[cli] ❌ cget 명령어 실행 중 오류: {e}")
             return False
 
-    async def buy_stop(self):
+    async def buy_stop(self, key_in=False):
         if not self.update_setting("bstop", True):
-            tel_send("❌ buy_stop 설정 파일 업데이트 실패")
+            if not key_in:
+                tel_send("❌ buy_stop 설정 파일 업데이트 실패")
+            else:
+                self.logger.info("[cli] ❌ buy_stop 설정 파일 업데이트 실패")
             return False
         else:
-            tel_send("⭕ buy_stop 설정")
+            if not key_in:
+                tel_send("⭕ buy_stop 설정")
+            else:
+                self.logger.info("[cli] ⭕ buy_stop 설정")
             return True
 
-    async def buy_go(self):
+    async def buy_go(self, key_in=False):
         if not self.update_setting("bstop", False):
-            tel_send("❌ buy_go 설정 파일 업데이트 실패")
+            if not key_in:
+                tel_send("❌ buy_go 설정 파일 업데이트 실패")
+            else:
+                self.logger.info("[cli] ❌ buy_go 설정 파일 업데이트 실패")
             return False
         else:
-            tel_send("⭕ buy_go 설정")
+            if not key_in:
+                tel_send("⭕ buy_go 설정")
+            else:
+                self.logger.info("[cli] ⭕ buy_go 설정")
             return True
 
-    async def sell_stop(self):
+    async def sell_stop(self, key_in=False):
         if not self.update_setting("sstop", True):
-            tel_send("❌ sell_stop 설정 파일 업데이트 실패")
+            if not key_in:
+                tel_send("❌ sell_stop 설정 파일 업데이트 실패")
+            else:
+                self.logger.info("[cli] ❌ sell_stop 설정 파일 업데이트 실패")
             return False
         else:
-            tel_send("⭕ sell_stop 설정")
+            if not key_in:
+                tel_send("⭕ sell_stop 설정")
+            else:
+                self.logger.info("[cli] ⭕ sell_stop 설정")
             return True
 
-    async def sell_go(self):
+    async def sell_go(self, key_in=False):
         if not self.update_setting("sstop", False):
-            tel_send("❌ sell_go 설정 파일 업데이트 실패")
+            if not key_in:
+                tel_send("❌ sell_go 설정 파일 업데이트 실패")
+            else:
+                self.logger.info("[cli] ❌ sell_go 설정 파일 업데이트 실패")
             return False
         else:
-            tel_send("⭕ sell_go 설정")
+            if not key_in:
+                tel_send("⭕ sell_go 설정")
+            else:
+                self.logger.info("[cli] ⭕ sell_go 설정")
             return True
 
-    async def condition(self, number=None):
+    async def condition(self, number=None, key_in=False):
         """condition 명령어를 처리합니다 - 조건식 목록 조회 또는 search_seq 설정"""
         try:
             # 먼저 stop 실행
-            tel_send("🔄 condition 명령어 실행을 위해 서비스를 중지합니다...")
+            if not key_in:
+                tel_send("🔄 condition 명령어 실행을 위해 서비스를 중지합니다...")
+            else:
+                self.logger.info(
+                    "[cli]🔄 condition 명령어 실행을 위해 서비스를 중지합니다..."
+                )
             await self.stop(set_auto_start_false=False)  # auto_start는 그대로 유지
 
             # 숫자가 제공된 경우 search_seq 설정
@@ -596,11 +792,23 @@ class ChatCommand:
                 try:
                     seq_number = str(number)
                     if self.update_setting("search_seq", seq_number):
-                        tel_send(f"✅ 검색 조건식이 {seq_number}번으로 설정되었습니다")
+                        if not key_in:
+                            tel_send(
+                                f"✅ 검색 조건식이 {seq_number}번으로 설정되었습니다"
+                            )
+                        else:
+                            self.logger.info(
+                                f"[cli] ✅ 검색 조건식이 {seq_number}번으로 설정되었습니다"
+                            )
 
                         # 장 시간일 경우 자동으로 start 실행
                         if MarketHour.is_market_open_time():
-                            tel_send("🔄 장 시간이므로 자동으로 재시작합니다...")
+                            if not key_in:
+                                tel_send("🔄 장 시간이므로 자동으로 재시작합니다...")
+                            else:
+                                self.logger.info(
+                                    "[cli] 🔄 장 시간이므로 자동으로 재시작합니다..."
+                                )
 
                             # 잠시 대기
                             await asyncio.sleep(2)
@@ -608,20 +816,41 @@ class ChatCommand:
                             # 새로운 설정으로 시작
                             success = await self.start()
                             if success:
-                                tel_send("✅ 새로운 조건식으로 재시작되었습니다")
+                                if not key_in:
+                                    tel_send("✅ 새로운 조건식으로 재시작되었습니다")
+                                else:
+                                    self.logger.info(
+                                        "[cli]✅ 새로운 조건식으로 재시작되었습니다"
+                                    )
                             else:
-                                tel_send("❌ 재시작에 실패했습니다")
+                                if not key_in:
+                                    tel_send("❌ 재시작에 실패했습니다")
+                                else:
+                                    self.logger.info("[cli]❌ 재시작에 실패했습니다")
                         else:
-                            tel_send(
-                                f"⏰ 장이 열리지 않았습니다. 장 시작 시간({MarketHour.MARKET_START_HOUR:02d}:{MarketHour.MARKET_START_MINUTE:02d})에 자동으로 시작됩니다."
-                            )
+                            if not key_in:
+                                tel_send(
+                                    f"⏰ 장이 열리지 않았습니다. 장 시작 시간({MarketHour.MARKET_START_HOUR:02d}:{MarketHour.MARKET_START_MINUTE:02d})에 자동으로 시작됩니다."
+                                )
+                            else:
+                                self.logger.info(
+                                    f"[cli]⏰ 장이 열리지 않았습니다. 장 시작 시간({MarketHour.MARKET_START_HOUR:02d}:{MarketHour.MARKET_START_MINUTE:02d})에 자동으로 시작됩니다."
+                                )
 
                         return True
                     else:
-                        tel_send("❌ 검색 조건식 설정에 실패했습니다")
+                        if not key_in:
+                            tel_send("❌ 검색 조건식 설정에 실패했습니다")
+                        else:
+                            self.logger.info("[cli]❌ 검색 조건식 설정에 실패했습니다")
                         return False
                 except ValueError:
-                    tel_send("❌ 잘못된 숫자 형식입니다. 예: condition 0")
+                    if not key_in:
+                        tel_send("❌ 잘못된 숫자 형식입니다. 예: condition 0")
+                    else:
+                        self.logger.info(
+                            "[cli]❌ 잘못된 숫자 형식입니다. 예: condition 0"
+                        )
                     return False
 
             # 숫자가 제공되지 않은 경우 조건식 목록 조회
@@ -631,13 +860,21 @@ class ChatCommand:
                     get_condition_list(self.token), timeout=10.0
                 )
             except asyncio.TimeoutError:
-                tel_send(
-                    "⏰ 조건식 목록 조회가 시간 초과되었습니다. 나중에 다시 시도해주세요."
-                )
+                if not key_in:
+                    tel_send(
+                        "⏰ 조건식 목록 조회가 시간 초과되었습니다. 나중에 다시 시도해주세요."
+                    )
+                else:
+                    self.logger.info(
+                        "[cli]⏰ 조건식 목록 조회가 시간 초과되었습니다. 나중에 다시 시도해주세요."
+                    )
                 return False
 
             if not condition_data:
-                tel_send("📋 조건식 목록이 없습니다.")
+                if not key_in:
+                    tel_send("📋 조건식 목록이 없습니다.")
+                else:
+                    self.logger.info("[cli]📋 조건식 목록이 없습니다.")
                 return False
 
             # 조건식 목록 포맷팅
@@ -649,14 +886,20 @@ class ChatCommand:
                 message += f"• {condition_id}: {condition_name}\n"
 
             message += "\n💡 사용법: condition {번호} (예: condition 0)"
-            tel_send(message)
+            if not key_in:
+                tel_send(message)
+            else:
+                self.logger.info("[cli] %s", message)
             return True
 
         except Exception as e:
-            tel_send(f"❌ condition 명령어 실행 중 오류: {e}")
+            if not key_in:
+                tel_send(f"❌ condition 명령어 실행 중 오류: {e}")
+            else:
+                self.logger.info(f"[cli]❌ condition 명령어 실행 중 오류: {e}")
             return False
 
-    async def help(self):
+    async def help(self, key_in=False):
         """help 명령어를 처리합니다 - 명령어 설명 및 사용법 가이드"""
         try:
             help_message = """🤖 [키움 REST API 봇 명령어 가이드]
@@ -691,74 +934,97 @@ class ChatCommand:
 
 모든 명령어는 퍼센트 단위로 입력하세요."""
 
-            tel_send(help_message)
+            if not key_in:
+                tel_send(help_message)
+            else:
+                self.logger.info("[cli] %s", help_message)
             return True
 
         except Exception as e:
-            tel_send(f"❌ help 명령어 실행 중 오류: {e}")
+            if not key_in:
+                tel_send(f"❌ help 명령어 실행 중 오류: {e}")
+            else:
+                self.logger.info(f"[cli] ❌ help 명령어 실행 중 오류: {e}")
             return False
 
-    async def process_command(self, text):
+    async def process_command(self, text, key_in=False):
         """텍스트 명령어를 처리합니다."""
         # 텍스트 trim 및 소문자 변환
         command = text.strip().lower()
 
         if command == "start":
-            return await self.start()
+            return await self.start(key_in)
         elif command == "stop":
-            return await self.stop(True)  # 사용자 명령이므로 auto_start를 false로 설정
+            return await self.stop(
+                True, key_in
+            )  # 사용자 명령이므로 auto_start를 false로 설정
         elif command == "report" or command == "r":
-            return await self.report()
+            return await self.report(key_in)
         elif command == "acc":
-            return await self.acc()
+            return await self.acc(key_in)
         elif command == "dep":
-            return await self.dep()
+            return await self.dep(key_in)
         elif command == "cond":
-            return await self.condition()
+            return await self.condition(None, key_in)
         elif command.startswith("cond "):
             # condition 명령어 처리
             parts = command.split()
             if len(parts) == 2:
-                return await self.condition(parts[1])
+                return await self.condition(parts[1], key_in)
             else:
-                tel_send("❌ 사용법: cond {번호} (예: cond 0)")
+                if not key_in:
+                    tel_send("❌ 사용법: cond {번호} (예: cond 0)")
+                else:
+                    self.logger.info("[cli]❌ 사용법: cond {번호} (예: cond 0)")
                 return False
         elif command == "help" or command == "h":
-            return await self.help()
+            return await self.help(key_in)
         elif command == "cget":
-            return await self.cget()
+            return await self.cget(key_in)
         elif command == "bstop":
-            return await self.buy_stop()
+            return await self.buy_stop(key_in)
         elif command == "bgo":
-            return await self.buy_go()
+            return await self.buy_go(key_in)
         elif command == "sstop":
-            return await self.sell_stop()
+            return await self.sell_stop(key_in)
         elif command == "sgo":
-            return await self.sell_go()
+            return await self.sell_go(key_in)
         elif command.startswith("tpr "):
             # tpr 명령어 처리
             parts = command.split()
             if len(parts) == 2:
-                return await self.tpr(parts[1])
+                return await self.tpr(parts[1], key_in)
             else:
-                tel_send("❌ 사용법: tpr {숫자} (예: tpr 5)")
+                if not key_in:
+                    tel_send("❌ 사용법: tpr {숫자} (예: tpr 5)")
+                else:
+                    self.logger.info("[cli]❌ 사용법: tpr {숫자} (예: tpr 5)")
                 return False
         elif command.startswith("slr "):
             # slr 명령어 처리
             parts = command.split()
             if len(parts) == 2:
-                return await self.slr(parts[1])
+                return await self.slr(parts[1], key_in)
             else:
-                tel_send("❌ 사용법: slr {숫자} (예: slr -10)")
+                if not key_in:
+                    tel_send("❌ 사용법: slr {숫자} (예: slr -10)")
+                else:
+                    self.logger.info("[cli]❌ 사용법: slr {숫자} (예: slr -10)")
                 return False
         elif command.startswith("brt "):
             # brt 명령어 처리
             parts = command.split()
             if len(parts) == 2:
-                return await self.brt(parts[1])
+                return await self.brt(parts[1], key_in)
             else:
-                tel_send("❌ 사용법: brt {숫자} (예: brt 3)")
+                if not key_in:
+                    tel_send("❌ 사용법: brt {숫자} (예: brt 3)")
+                else:
+                    self.logger.info("[cli]❌ 사용법: brt {숫자} (예: brt 3)")
                 return False
         else:
-            tel_send(f"❓ 알 수 없는 명령어입니다: {text}")
+            if not key_in:
+                tel_send(f"❓ 알 수 없는 명령어입니다: {text}")
+            else:
+                self.logger.info("[cli] ❓ 알 수 없는 명령어입니다: {text}")
             return False
