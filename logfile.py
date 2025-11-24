@@ -45,11 +45,11 @@ def setup_log(log_dir="logs"):
 
     # log를 파일에 출력
     file_handler = logging.handlers.TimedRotatingFileHandler(
-        filename=log_path, when="D", interval=1, encoding="utf-8"
+        filename=log_path, when="midnight", interval=1, encoding="utf-8"
     )
 
     file_handler = logging.FileHandler(log_path, encoding="utf-8")
-    # file_handler.suffix = 'log_%Y%m%d'  # 파일명 끝에 붙여줌; ex. log_20190811
+    file_handler.suffix = "_%Y%m%d"  # 파일명 끝에 붙여줌; ex. _20190811
     file_handler.setFormatter(formatter)  # 핸들러에 로깅 포맷 할당
     logger.addHandler(file_handler)  # 로거에 핸들러 추가
     return logger
