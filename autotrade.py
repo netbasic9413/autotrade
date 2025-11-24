@@ -143,7 +143,7 @@ class MainApp:
                 await self.check_market_timing()
 
                 # 1초 대기
-                # await asyncio.sleep(1)
+                await asyncio.sleep(1)
 
         except KeyboardInterrupt:
             self.logger.info("\n프로그램을 종료합니다...")
