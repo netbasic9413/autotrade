@@ -432,6 +432,7 @@ class ChatCommand:
 
             total_profit_loss = 0
             total_pl_amt = 0
+            total_pur_amt = 0
 
             for stock in account_data:
                 stock_code = stock.get("stk_cd", "N/A")
@@ -439,6 +440,7 @@ class ChatCommand:
                 profit_loss_rate = float(stock.get("pl_rt", 0))
                 pl_amt = int(stock.get("pl_amt", 0))
                 remaining_qty = int(stock.get("rmnd_qty", 0))
+                pur_amt = float(stock.get("pur_amt", 0))
 
                 # 수익률에 따른 이모지 설정
                 if profit_loss_rate > 0:
@@ -451,10 +453,12 @@ class ChatCommand:
                 message += f"{emoji} [{stock_name}] ({stock_code})\n"
                 message += f"   수익률: {profit_loss_rate:+.2f}%\n"
                 message += f"   평가손익: {pl_amt:,.0f}원\n"
-                message += f"   보유수량: {remaining_qty:,}주\n\n"
+                message += f"   보유수량: {remaining_qty:,}주\n"
+                message += f"   매입금액: {pur_amt:,.0f}원\n\n"
 
                 total_profit_loss += profit_loss_rate
                 total_pl_amt += pl_amt
+                total_pur_amt += pur_amt
 
             # 전체 요약
             avg_profit_loss = (
@@ -464,6 +468,7 @@ class ChatCommand:
             message += f"   총 보유종목: {len(account_data)}개\n"
             message += f"   평균 수익률: {avg_profit_loss:+.2f}%\n"
             message += f"   총 평가손익: {total_pl_amt:,.0f}원\n"
+            message += f"   총 매입금액: {total_pur_amt:,.0f}원\n\n"
 
             if not key_in:
                 tel_send(message)
