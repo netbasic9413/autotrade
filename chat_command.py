@@ -17,7 +17,8 @@ import logfile
 class ChatCommand:
     def __init__(self):
         self.rt_search = RealTimeSearch(on_connection_closed=self._on_connection_closed)
-        self.script_dir = os.path.dirname(os.path.abspath(__file__))
+        # self.script_dir = os.path.dirname(os.path.abspath(__file__))
+        self.script_dir = os.getcwd()
         self.settings_path = os.path.join(self.script_dir, "settings.json")
         self.check_n_sell_task = None  # check_n_sell 백그라운드 태스크
         self.token = None  # 현재 사용 중인 토큰
