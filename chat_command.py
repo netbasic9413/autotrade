@@ -6,11 +6,16 @@ from tel_send import tel_send
 from check_n_sell import chk_n_sell
 from acc_val import fn_kt00004
 from acc_balance import fn_kt00018
+
 from market_hour import MarketHour
 from get_seq import get_condition_list
 from login import fn_au10001
 from get_setting import get_setting
 from check_bal import fn_kt00001
+from config import MARKET_START_HOUR
+from config import MARKET_START_MINUTE
+from config import MARKET_END_HOUR
+from config import MARKET_END_MINUTE
 import logfile
 
 
@@ -230,11 +235,11 @@ class ChatCommand:
             if not MarketHour.is_market_open_time():
                 if not key_in:
                     tel_send(
-                        f"⏰ 장이 열리지 않았습니다. 장 시작 시간({MarketHour.MARKET_START_HOUR:02d}:{MarketHour.MARKET_START_MINUTE:02d})에 자동으로 시작됩니다."
+                        f"⏰ 장이 열리지 않았습니다. 장 시작 시간({MARKET_START_HOUR:02d}:{MARKET_START_MINUTE:02d})에 자동으로 시작됩니다."
                     )
                 else:
                     self.logger.info(
-                        f"[cli] ⏰ 장이 열리지 않았습니다. 장 시작 시간({MarketHour.MARKET_START_HOUR:02d}:{MarketHour.MARKET_START_MINUTE:02d})에 자동으로 시작됩니다."
+                        f"[cli] ⏰ 장이 열리지 않았습니다. 장 시작 시간({MARKET_START_HOUR:02d}:{MARKET_START_MINUTE:02d})에 자동으로 시작됩니다."
                     )
                 return True
 
@@ -836,11 +841,11 @@ class ChatCommand:
                         else:
                             if not key_in:
                                 tel_send(
-                                    f"⏰ 장이 열리지 않았습니다. 장 시작 시간({MarketHour.MARKET_START_HOUR:02d}:{MarketHour.MARKET_START_MINUTE:02d})에 자동으로 시작됩니다."
+                                    f"⏰ 장이 열리지 않았습니다. 장 시작 시간({MARKET_START_HOUR:02d}:{MARKET_START_MINUTE:02d})에 자동으로 시작됩니다."
                                 )
                             else:
                                 self.logger.info(
-                                    f"[cli]⏰ 장이 열리지 않았습니다. 장 시작 시간({MarketHour.MARKET_START_HOUR:02d}:{MarketHour.MARKET_START_MINUTE:02d})에 자동으로 시작됩니다."
+                                    f"[cli]⏰ 장이 열리지 않았습니다. 장 시작 시간({MARKET_START_HOUR:02d}:{MARKET_START_MINUTE:02d})에 자동으로 시작됩니다."
                                 )
 
                         return True

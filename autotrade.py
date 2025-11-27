@@ -10,6 +10,10 @@ import logfile
 import threading
 import time
 import queue
+from config import MARKET_START_HOUR
+from config import MARKET_START_MINUTE
+from config import MARKET_END_HOUR
+from config import MARKET_END_MINUTE
 
 
 data_q = queue.Queue()
@@ -27,6 +31,7 @@ class MainApp:
         self.today_stopped = False  # 오늘 stop이 실행되었는지 추적
         self.last_check_date = None  # 마지막으로 확인한 날짜
         self.logger = logfile.setup_log()
+        # self.market_hour = MarketHour()
 
     def get_chat_updates(self):
         """텔레그램 채팅 업데이트를 가져옵니다."""
@@ -62,13 +67,13 @@ class MainApp:
 
         if MarketHour.is_market_start_time() and auto_start and not self.today_started:
             self.logger.info(
-                f"장 시작 시간({MarketHour.MARKET_START_HOUR:02d}:{MarketHour.MARKET_START_MINUTE:02d})입니다. 자동으로 start 명령을 실행합니다."
+                f"장 시작 시간({MARKET_START_HOUR:02d}:{MARKET_START_MINUTE:02d})입니다. 자동으로 start 명령을 실행합니다."
             )
             await self.chat_command.start()
             self.today_started = True  # 오늘 start 실행 완료 표시
         elif MarketHour.is_market_end_time() and not self.today_stopped:
             self.logger.info(
-                f"장 종료 시간({MarketHour.MARKET_END_HOUR:02d}:{MarketHour.MARKET_END_MINUTE:02d})입니다. 자동으로 stop 명령을 실행합니다."
+                f"장 종료 시간({MARKET_END_HOUR:02d}:{MARKET_END_MINUTE:02d})입니다. 자동으로 stop 명령을 실행합니다."
             )
             await self.chat_command.stop(False)  # auto_start를 false로 설정하지 않음
             self.logger.info("자동으로 계좌평가 보고서를 발송합니다.")
