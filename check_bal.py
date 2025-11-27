@@ -44,9 +44,10 @@ def fn_kt00001(cont_yn="N", next_key="", token=None):
     if int(ret_code) != 0:
         return ""
 
-    entry = response.json()["entr"]
-    logger.info("예수금: %s", entry)
-    return entry
+    # entry = response.json()["entr"]
+    # logger.info("예수금: %s", entry)
+    # return entry
+    return response
 
 
 # 실행 구간

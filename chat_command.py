@@ -525,10 +525,14 @@ class ChatCommand:
                     self.logger.info("[cli]📊 예수금 내역요청 데이터가 없습니다.")
                 return False
 
-            f_balance = float(balance)
+            entr = balance.json()["entr"]
+            f_entr = float(entr)
+            d2_entra = balance.json()["d2_entra"]
+            f_d2_entra = float(d2_entra)
 
             message = "📊 [예수금 내역]\n\n"
-            message += f"   예수금: {f_balance:,.0f}원\n"
+            message += f"   예수금: {f_entr:,.0f}원\n"
+            message += f"   D+2추정예수금: {f_d2_entra:,.0f}원\n"
 
             if not key_in:
                 tel_send(message)
