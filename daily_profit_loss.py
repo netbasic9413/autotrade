@@ -5,6 +5,9 @@ from login import fn_au10001 as get_token
 import logfile
 
 
+logger = logfile.setup_log()
+
+
 # 당일실현손익상세요청
 def fn_ka10077(stk_cd, cont_yn="N", next_key="", token=None):
     endpoint = "/api/dostk/acnt"
@@ -28,9 +31,9 @@ def fn_ka10077(stk_cd, cont_yn="N", next_key="", token=None):
     response = requests.post(url, headers=headers, json=params)
 
     # 4. 응답 상태 코드와 데이터 출력
-    print("Code:", response.status_code)
-    print(
-        "Header:",
+    logger.info("Code: %d", response.status_code)
+    logger.info(
+        "Header: %s",
         json.dumps(
             {
                 key: response.headers.get(key)
@@ -40,8 +43,8 @@ def fn_ka10077(stk_cd, cont_yn="N", next_key="", token=None):
             ensure_ascii=False,
         ),
     )
-    print(
-        "Body:", json.dumps(response.json(), indent=4, ensure_ascii=False)
+    logger.info(
+        "Body: %s", json.dumps(response.json(), indent=4, ensure_ascii=False)
     )  # JSON 응답을 파싱하여 출력
 
     tdy_rlzt_pl_dtl = response.json()["tdy_rlzt_pl_dtl"]

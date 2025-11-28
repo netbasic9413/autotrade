@@ -14,6 +14,7 @@ from config import MARKET_START_HOUR
 from config import MARKET_START_MINUTE
 from config import MARKET_END_HOUR
 from config import MARKET_END_MINUTE
+from config import SW_VERSION
 
 
 data_q = queue.Queue()
@@ -115,6 +116,7 @@ class MainApp:
 
     async def run(self, event=None):
         """메인 실행 루프"""
+        self.logger.info("[Autotrade SW version : %s]", SW_VERSION)
         self.logger.info("[Bot 모니터링을 시작합니다...]\n")
 
         try:
