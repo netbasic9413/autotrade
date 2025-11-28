@@ -12,71 +12,76 @@ import logfile
 
 logger = logfile.setup_log()
 
+
 def chk_n_buy(stk_cd, token=None):
 
-	try:
-		my_stocks = get_my_stocks(token=token)
-		for stock in my_stocks:
-			if stock['stk_cd'].replace('A', '') == stk_cd:
-				logger.info("이미 보유 중입니다.")
-				return
-	except Exception as e:
-		logger.info("보유종목 조회 중 오류 발생: %s", e)
-		return
+    try:
+        my_stocks = get_my_stocks(token=token)
+        for stock in my_stocks:
+            if stock["stk_cd"].replace("A", "") == stk_cd:
+                logger.info("이미 보유 중입니다.")
+                return
+    except Exception as e:
+        logger.info("보유종목 조회 중 오류 발생: %s", e)
+        return
 
-	time.sleep(0.3)
+    time.sleep(0.3)
 
-	try:
-		balance = int(get_balance(token=token))
-		if balance <= 0:
-			logger.info("잔고가 없습니다.")
-			return
-	except Exception as e:
-		logger.info("잔고 조회 중 오류 발생: %s", e)
-		return
+    try:
+        balance = get_balance(token=token)
 
-	buy_ratio = get_setting('buy_ratio', 5.0) / 100
+        entr = balance.json()["entr"]
+        f_entr = float(entr)
+        if f_entr <= 0:
+            logger.info("잔고가 없습니다.")
+            return
+    except Exception as e:
+        logger.info("잔고 조회 중 오류 발생: %s", e)
+        return
 
-	expense = balance * buy_ratio
-	logger.info('지출할 금액: %s', expense)
+    buy_ratio = get_setting("buy_ratio", 5.0) / 100
 
-	time.sleep(0.3)
+    expense = f_entr * buy_ratio
+    logger.info("지출할 금액: %s", expense)
 
-	try:
-		bid = int(check_bid(stk_cd, token=token))
-	except Exception as e:
-		logger.info("호가 조회 중 오류 발생: %s", e)
-		return
+    time.sleep(0.3)
 
-	if bid > 0:
-		ord_qty = int(expense // bid)  # 내림하여 정수로 변환
-		if ord_qty == 0:
-			logger.info("주문할 주식 수량이 0입니다.")
-			return
-		logger.info('주문할 주식 수량: %d', ord_qty)
+    try:
+        bid = int(check_bid(stk_cd, token=token))
+    except Exception as e:
+        logger.info("호가 조회 중 오류 발생: %s", e)
+        return
 
-	time.sleep(0.3)
+    if bid > 0:
+        ord_qty = int(expense // bid)  # 내림하여 정수로 변환
+        if ord_qty == 0:
+            logger.info("주문할 주식 수량이 0입니다.")
+            return
+        logger.info("주문할 주식 수량: %d", ord_qty)
 
-	try:
-		buy_result = buy_stock(stk_cd, ord_qty, bid, token=token)
-		if buy_result != 0:
-			logger.info("주문 실패")
-			return
-	except Exception as e:
-		logger.info("주문 중 오류 발생: %s", e)
-		return
+    time.sleep(0.3)
 
-	time.sleep(0.3)
+    try:
+        buy_result = buy_stock(stk_cd, ord_qty, bid, token=token)
+        if buy_result != 0:
+            logger.info("주문 실패")
+            return
+    except Exception as e:
+        logger.info("주문 중 오류 발생: %s", e)
+        return
 
-	try:
-		stock_name = stock_info(stk_cd, token=token)
-	except Exception as e:
-		logger.info("종목정보 조회 중 오류 발생: %s", e)
-		return
+    time.sleep(0.3)
 
-	message = f'{stock_name} {ord_qty}주 매수 완료'
-	logger.info(message)
-	tel_send(message)
+    try:
+        stock_name = stock_info(stk_cd, token=token)
+    except Exception as e:
+        logger.info("종목정보 조회 중 오류 발생: %s", e)
+        return
 
-if __name__ == '__main__':
-	chk_n_buy('005930', token=get_token())
+    message = f"{stock_name} {ord_qty}주 매수 완료"
+    logger.info(message)
+    tel_send(message)
+
+
+if __name__ == "__main__":
+    chk_n_buy("005930", token=get_token())

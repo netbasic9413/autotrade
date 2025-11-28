@@ -21,7 +21,7 @@ def fn_ka10077(stk_cd, cont_yn="N", next_key="", token=None):
 
     # 2. 요청 데이터
     params = {
-        "stk_cd": "005930",  # 종목코드
+        "stk_cd": stk_cd,  # 종목코드
     }
 
     # 3. http POST 요청
@@ -45,8 +45,15 @@ def fn_ka10077(stk_cd, cont_yn="N", next_key="", token=None):
     )  # JSON 응답을 파싱하여 출력
 
     tdy_rlzt_pl_dtl = response.json()["tdy_rlzt_pl_dtl"]
+    f_c = 0
+    i = 0
+    for get_d in tdy_rlzt_pl_dtl:
+        tdy_sel_p = float(tdy_rlzt_pl_dtl[i].get("tdy_sel_pl", 0))
+        f_c = float(tdy_sel_p)
+        f_c += f_c
+        i += 1
 
-    return tdy_rlzt_pl_dtl
+    return f_c
 
 
 # 실행 구간
