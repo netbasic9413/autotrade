@@ -3,6 +3,7 @@ import json
 from config import host_url
 from login import fn_au10001 as get_token
 import logfile
+from get_setting import get_setting
 
 
 logger = logfile.setup_log()
@@ -23,9 +24,18 @@ def fn_kt10001(stk_cd, ord_qty, cont_yn="N", next_key="", token=None):
         "api-id": "kt10001",  # TR명
     }
 
+    smarket = get_setting("smarket", 1)
+    strMarket = ""
+    if smarket == 1:
+        strMarket = "KRX"
+    elif smarket == 2:
+        strMarket = "NXT"
+    elif smarket == 3:
+        strMarket = "SOR"
+
     # 3. 요청 데이터
     params = {
-        "dmst_stex_tp": "KRX",  # 국내거래소구분 KRX,NXT,SOR
+        "dmst_stex_tp": strMarket,  # 국내거래소구분 KRX,NXT,SOR
         "stk_cd": stk_cd,  # 종목코드
         "ord_qty": ord_qty,  # 주문수량
         "ord_uv": "",  # 주문단가

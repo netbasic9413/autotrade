@@ -6,7 +6,7 @@ from tel_send import tel_send
 from check_n_sell import chk_n_sell
 from acc_val import fn_kt00004
 from acc_balance import fn_kt00018
-
+from daily_acc import fn_ka01690
 from market_hour import MarketHour
 from get_seq import get_condition_list
 from login import fn_au10001
@@ -95,6 +95,7 @@ class ChatCommand:
             buy_ratio = settings.get("buy_ratio")
             bstop = settings.get("bstop")
             sstop = settings.get("sstop")
+            smarket = settings.get("smarket")
 
             message = f"📋 [설정]\n"
             message += f"   process_name: {prosess_name}\n"
@@ -105,6 +106,7 @@ class ChatCommand:
             message += f"   buy_ratio: {buy_ratio:+.1f}\n"
             message += f"   bstop: {bstop}\n"
             message += f"   sstop: {sstop}\n"
+            message += f"   smarket: {smarket}\n"
 
             if not key_in:
                 tel_send(message)
@@ -626,6 +628,71 @@ class ChatCommand:
                 self.logger.info(f"[cli] ❌ acc 명령어 실행 중 오류: {e}")
             return False
 
+    async def dacc(self, key_in=False):
+        """dacc 명령어를 처리합니다 - daily account 실행 결과를 텔레그램으로 발송"""
+        try:
+            # 토큰이 없으면 새로 발급
+            if not self.token:
+                token = self.get_token()
+                if not token:
+                    tel_send("❌ 토큰 발급에 실패했습니다")
+                return False
+
+            # daily_acc 실행 (타임아웃 10초)
+            try:
+                account_data = await asyncio.wait_for(
+                    asyncio.get_event_loop().run_in_executor(
+                        None, fn_ka01690, "N", "", self.token
+                    ),
+                    timeout=10.0,
+                )
+            except asyncio.TimeoutError:
+                if not key_in:
+                    tel_send(
+                        "⏰ 서버로부터 응답이 늦어지고 있습니다. 나중에 다시 시도해주세요."
+                    )
+                else:
+                    self.logger.info(
+                        "[cli]⏰ 서버로부터 응답이 늦어지고 있습니다. 나중에 다시 시도해주세요."
+                    )
+                return False
+
+            if not account_data:
+                if not key_in:
+                    tel_send("📊 일별잔고수익률요청 데이터가 없습니다.")
+                else:
+                    self.logger.info("[cli] 📊 일별잔고수익률요청 데이터가 없습니다.")
+                return False
+
+            # 데이터 정리 및 포맷팅
+            message = "📊 [일별잔고수익률내역]\n\n"
+
+            # for stock in account_data:
+            total_buy_amt = float(account_data.get("tot_buy_amt", 0))  # 총매입금액
+            total_evlt_amt = float(account_data.get("tot_evlt_amt", 0))  # 총평가금액
+            total_evlt_prft = float(
+                account_data.get("tot_evltv_prft", 0)
+            )  # 총평가손익금
+            total_prft_rt = float(account_data.get("tot_prft_rt", 0))  # 수익률(%)
+
+            message += f"   총매입금액: {total_buy_amt:,.0f}원\n"
+            message += f"   총평가금액: {total_evlt_amt:,.0f}원\n"
+            message += f"   총평가손익금: {total_evlt_prft:,.0f}원\n"
+            message += f"   총수익률: {total_prft_rt:+.2f}%\n"
+
+            if not key_in:
+                tel_send(message)
+            else:
+                self.logger.info("[cli] %s", message)
+            return True
+
+        except Exception as e:
+            if not key_in:
+                tel_send(f"❌ acc 명령어 실행 중 오류: {e}")
+            else:
+                self.logger.info(f"[cli] ❌ acc 명령어 실행 중 오류: {e}")
+            return False
+
     async def tpr(self, number, key_in=False):
         """tpr 명령어를 처리합니다 - take_profit_rate 수정"""
         try:
@@ -789,6 +856,35 @@ class ChatCommand:
             else:
                 self.logger.info("[cli] ⭕ sell_go 설정")
             return True
+
+    async def smarket(self, number, key_in=False):
+        """sm 명령어를 처리합니다 - smarket 수정"""
+        try:
+            market_num = int(number)
+            if self.update_setting("smarket", market_num):
+                if not key_in:
+                    tel_send(f"✅ 거래소 {market_num}로 설정되었습니다")
+                else:
+                    self.logger.info(f"[cli] ✅ 거래소 {market_num}로 설정되었습니다")
+                return True
+            else:
+                if not key_in:
+                    tel_send("❌ 거래소 설정에 실패했습니다")
+                else:
+                    self.logger.info("[cli] ❌ 거래소 설정에 실패했습니다")
+                return False
+        except ValueError:
+            if not key_in:
+                tel_send("❌ 잘못된 숫자 형식입니다. 예: sm 1")
+            else:
+                self.logger.info("[cli] ❌ 잘못된 숫자 형식입니다. 예: sm 1")
+            return False
+        except Exception as e:
+            if not key_in:
+                tel_send(f"❌ sm 명령어 실행 중 오류: {e}")
+            else:
+                self.logger.info(f"[cli] ❌ sm 명령어 실행 중 오류: {e}")
+            return False
 
     async def condition(self, number=None, key_in=False):
         """condition 명령어를 처리합니다 - 조건식 목록 조회 또는 search_seq 설정"""
@@ -977,6 +1073,8 @@ class ChatCommand:
             return await self.report(key_in)
         elif command == "acc":
             return await self.acc(key_in)
+        elif command == "dacc":
+            return await self.dacc(key_in)
         elif command == "dep":
             return await self.dep(key_in)
         elif command == "cond":
@@ -1036,6 +1134,17 @@ class ChatCommand:
                     tel_send("❌ 사용법: brt {숫자} (예: brt 3)")
                 else:
                     self.logger.info("[cli]❌ 사용법: brt {숫자} (예: brt 3)")
+                return False
+        elif command.startswith("sm "):
+            # sm 명령어 처리
+            parts = command.split()
+            if len(parts) == 2:
+                return await self.smarket(parts[1], key_in)
+            else:
+                if not key_in:
+                    tel_send("❌ 사용법: sm {숫자} (예: sm 1)")
+                else:
+                    self.logger.info("[cli]❌ 사용법: sm {숫자} (예: sm 1)")
                 return False
         else:
             if not key_in:

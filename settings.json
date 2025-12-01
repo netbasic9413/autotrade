@@ -1,10 +1,11 @@
 {
-  "process_name": "b",
+  "process_name": "a",
   "auto_start": true,
-  "search_seq": "4",
-  "take_profit_rate": 10.0,
-  "stop_loss_rate": -5.0,
+  "search_seq": "7",
+  "take_profit_rate": 7.0,
+  "stop_loss_rate": -2.0,
   "buy_ratio": 2.0,
   "bstop": false,
-  "sstop": false
+  "sstop": false,
+  "smarket": 3
 }
