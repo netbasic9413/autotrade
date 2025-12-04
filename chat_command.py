@@ -129,35 +129,36 @@ class ChatCommand:
                 try:
                     # chk_n_sell을 비동기로 실행하여 이벤트 루프 블로킹 방지
                     # 동기 HTTP 요청이 이벤트 루프를 블로킹하지 않도록 executor에서 실행
-                    if get_sell_stop:
-                        continue
-                    success = await asyncio.get_event_loop().run_in_executor(
-                        None, chk_n_sell, self.token
-                    )
-                    if success:
-                        failure_count = 0  # 성공 시 실패 카운터 리셋
-                    else:
-                        failure_count += 1
-                        self.logger.info(
-                            f"chk_n_sell 실행 실패 ({failure_count}/{max_failures})"
+                    if not get_sell_stop:
+                        success = await asyncio.get_event_loop().run_in_executor(
+                            None, chk_n_sell, self.token
                         )
-
-                        # 10번 연속 실패 시 자동 재시작
-                        if failure_count >= max_failures:
+                        if success:
+                            failure_count = 0  # 성공 시 실패 카운터 리셋
+                        else:
+                            failure_count += 1
                             self.logger.info(
-                                f"chk_n_sell이 {max_failures}번 연속 실패하여 자동 재시작을 실행합니다."
+                                f"chk_n_sell 실행 실패 ({failure_count}/{max_failures})"
                             )
-                            if not key_in:
-                                tel_send(
-                                    f"⚠️ chk_n_sell이 {max_failures}번 연속 실패하여 자동 재시작합니다."
-                                )
-                            else:
-                                self.logger.info(
-                                    f"⚠️ chk_n_sell이 {max_failures}번 연속 실패하여 자동 재시작합니다."
-                                )
 
-                            # 현재 루프 중단
-                            break
+                            # 10번 연속 실패 시 자동 재시작
+                            if failure_count >= max_failures:
+                                self.logger.info(
+                                    f"chk_n_sell이 {max_failures}번 연속 실패하여 자동 재시작을 실행합니다."
+                                )
+                                if not key_in:
+                                    tel_send(
+                                        f"⚠️ chk_n_sell이 {max_failures}번 연속 실패하여 자동 재시작합니다."
+                                    )
+                                else:
+                                    self.logger.info(
+                                        f"⚠️ chk_n_sell이 {max_failures}번 연속 실패하여 자동 재시작합니다."
+                                    )
+
+                                # 현재 루프 중단
+                                break
+                    else:
+                        self.logger.info("sstop이 실행 중...")
 
                 except Exception as e:
                     failure_count += 1

@@ -74,8 +74,8 @@ class RealTimeSearch:
                         )
                         await self.disconnect()
                     else:
-                        self.logger.info("로그인 성공하였습니다.")
-                        self.logger.info("조건검색 목록조회 패킷을 전송합니다.")
+                        # self.logger.info("로그인 성공하였습니다.")
+                        # self.logger.info("조건검색 목록조회 패킷을 전송합니다.")
                         # 로그인 패킷
                         param = {"trnm": "CNSRLST"}
                         await self.send_message(message=param)
@@ -86,7 +86,7 @@ class RealTimeSearch:
                     await self.send_message(response)
 
                 if response.get("trnm") != "PING":
-                    self.logger.info(f"실시간 시세 서버 응답 수신: {response}")
+                    # self.logger.info(f"실시간 시세 서버 응답 수신: {response}")
 
                     if response.get("trnm") == "REAL" and response.get("data"):
                         items = response["data"]
@@ -97,16 +97,17 @@ class RealTimeSearch:
                             item = random.choice(items)
                             jmcode = item["values"]["9001"]
 
-                            if get_buy_stop:
-                                continue
-                            # 동기 함수를 비동기로 실행하여 이벤트 루프 블로킹 방지
-                            # 이렇게 하면 WebSocket 메시지 수신이 계속 가능하고 PING 응답도 정상 처리됨
-                            asyncio.create_task(
-                                asyncio.get_event_loop().run_in_executor(
-                                    None, chk_n_buy, jmcode, self.token
+                            if not get_buy_stop:
+                                # 동기 함수를 비동기로 실행하여 이벤트 루프 블로킹 방지
+                                # 이렇게 하면 WebSocket 메시지 수신이 계속 가능하고 PING 응답도 정상 처리됨
+                                asyncio.create_task(
+                                    asyncio.get_event_loop().run_in_executor(
+                                        None, chk_n_buy, jmcode, self.token
+                                    )
                                 )
-                            )
-                            await asyncio.sleep(1)
+                                await asyncio.sleep(1)
+                            else:
+                                self.logger.info("bstop이 샐행 중")
 
             except websockets.ConnectionClosed:
                 self.logger.info("Connection closed by the server")
@@ -145,9 +146,9 @@ class RealTimeSearch:
                     try:
                         # 연결이 살아있는지 확인
                         await asyncio.wait_for(self.websocket.ping(), timeout=2)
-                        self.logger.info(
-                            "연결은 유지되고 있습니다. 메시지 수신 계속..."
-                        )
+                        # self.logger.info(
+                        #     "연결은 유지되고 있습니다. 메시지 수신 계속..."
+                        # )
                         continue
                     except Exception as ping_e:
                         self.logger.info(f"연결 확인 실패: {ping_e}")

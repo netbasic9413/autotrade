@@ -38,12 +38,12 @@ def chk_n_sell(token=None):
                     return True
 
                 # 당일실현손익상세요청
-                f_r = float(daily_p_l(stock["stk_cd"], token=token))
+                # f_r = float(daily_p_l(stock["stk_cd"], token=token))
 
                 result_type = "익절" if pl_rt > TP_RATE else "손절"
                 result_emoji = "🔴" if pl_rt > TP_RATE else "🔵"
                 message = f'{result_emoji} {stock["stk_nm"]} {int(stock["rmnd_qty"])}주 {result_type} 완료\n (수익율: {pl_rt}%)\n'
-                message += f"   당일매도손익: {f_r:,.0f}원\n"
+                # message += f"   당일매도손익: {f_r:,.0f}원\n"
                 tel_send(message)
                 logger.info(message)
 

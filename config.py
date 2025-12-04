@@ -6,7 +6,7 @@ is_acc_30954838 = True
 g_use_queue = True
 
 
-SW_VERSION = "0.0.4"
+SW_VERSION = "0.0.5"
 
 
 # 장 시작/종료 시간 상수
