@@ -57,7 +57,6 @@ class RealTimeSearch:
 
     async def receive_messages(self):
         """서버에서 오는 메시지를 수신하여 출력합니다."""
-        get_buy_stop = get_setting("bstop", False)
         while self.keep_running and self.connected and self.websocket:
             raw_message = None
             try:
@@ -97,6 +96,7 @@ class RealTimeSearch:
                             item = random.choice(items)
                             jmcode = item["values"]["9001"]
 
+                            get_buy_stop = get_setting("bstop", False)
                             if not get_buy_stop:
                                 # 동기 함수를 비동기로 실행하여 이벤트 루프 블로킹 방지
                                 # 이렇게 하면 WebSocket 메시지 수신이 계속 가능하고 PING 응답도 정상 처리됨

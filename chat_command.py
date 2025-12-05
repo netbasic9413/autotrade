@@ -120,7 +120,6 @@ class ChatCommand:
 
     async def _check_n_sell_loop(self, key_in=False):
         """check_n_sell을 1초마다 실행하는 백그라운드 루프"""
-        get_sell_stop = get_setting("sstop", False)
         failure_count = 0  # 연속 실패 횟수 카운터
         max_failures = 10  # 최대 허용 실패 횟수
 
@@ -129,6 +128,7 @@ class ChatCommand:
                 try:
                     # chk_n_sell을 비동기로 실행하여 이벤트 루프 블로킹 방지
                     # 동기 HTTP 요청이 이벤트 루프를 블로킹하지 않도록 executor에서 실행
+                    get_sell_stop = get_setting("sstop", False)
                     if not get_sell_stop:
                         success = await asyncio.get_event_loop().run_in_executor(
                             None, chk_n_sell, self.token
