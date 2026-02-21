@@ -44,8 +44,12 @@ real_app_secret = (
 )
 
 
-trial_app_key = "_HvK8LF6BSHSBZvrSoXwF4qQQKpz8Ey29IdKyiuPk2E"
-trial_app_secret = "gxIGpzhNY7XGYfpQRPv8uOQSdOWXjZxdzbSt4_d31SY"
+# trial_app_key = "_HvK8LF6BSHSBZvrSoXwF4qQQKpz8Ey29IdKyiuPk2E"
+# trial_app_secret = "gxIGpzhNY7XGYfpQRPv8uOQSdOWXjZxdzbSt4_d31SY"
+
+## 사용기간 2026.02.21 ~ 2026.05.21
+trial_app_key = "wPa7vo5ohqmZt5V2JRuPbHx_cUU905CteC8bK2CJ3QE"
+trial_app_secret = "RUqqpqGv8NhatNQHzyKH1BxRZD17o6-uMGYH3C1PbFs"
 
 
 real_host_url = "https://api.kiwoom.com"
